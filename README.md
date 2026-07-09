@@ -1,10 +1,6 @@
 # UniStream — Plataforma de streaming universitaria
 
-App full-stack hecha con **Next.js (App Router) + PostgreSQL**. Permite registrarse,
-subir videos MP4, verlos en una galería, reproducirlos en el navegador y comentar.
-
-Versión MVP y local: **sin nube, sin encriptación de contraseñas, sin transcodificación.**
-Todo eso son mejoras para más adelante (ver la sección "Pendientes / a mejorar").
+App full-stack hecha con **Next.js (App Router) + PostgreSQL**. Versión MVP y local.
 
 ---
 
@@ -110,14 +106,11 @@ Abre `http://localhost:3000`. Regístrate, sube un MP4 y reprodúcelo. ¡Listo!
 
 Estas cosas se dejaron fuera a propósito para mantener el MVP simple:
 
-- **Seguridad:** las contraseñas se guardan en texto plano. Antes de que lo use gente
-  real, hay que encriptarlas (por ejemplo con `bcrypt`) y usar sesiones firmadas.
-- **Almacenamiento en la nube:** hoy los videos se guardan en `/public/uploads`. Eso
-  funciona bien con `npm run dev`, pero para *producción* conviene almacenamiento de
-  objetos (S3, Cloudflare R2, etc.), porque `public/` se congela al hacer `next build`.
-- **Videos grandes:** para archivos muy pesados haría falta subida por partes (chunks).
-  Para el MVP, usa videos de prueba de tamaño moderado.
-- **Transcodificación / calidades:** si más adelante quieres que la calidad se adapte,
-  ahí entra FFmpeg + HLS.
-- **Miniaturas reales:** hoy se usa un frame del propio video como miniatura. Se pueden
-  generar imágenes con FFmpeg.
+- **Seguridad:** Encriptacion de contraseñas con bcrypt.
+- **Almacenamiento en la nube:** Los videos se guardan en`/public/uploads`. Solo para uso local. Implementar Azure para
+  almacenamiento en la nube.
+- **Videos grandes:** Para archivos muy pesados haría falta subida por partes (chunks). Diferentes niveles de calidad
+  (480p, 720p, 1080p, etc)
+- **Transcodificación / calidades:** Implementecion de FFmpeg + HLS.
+- **Miniaturas reales:** Subir miniaturas hechas por el usuario o generar frames para hacer miniaturas automaticas
+  (FFMPEG).
