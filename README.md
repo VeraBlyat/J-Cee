@@ -78,10 +78,6 @@ npm install
 npm install pg
 ```
 
-> Si empezaste este proyecto desde cero con `create-next-app`, simplemente copia las
-> carpetas `src/`, `public/`, `schema.sql` y `.env.local.example` dentro de tu proyecto,
-> y luego corre `npm install pg`.
-
 ### 4. Arrancar la app
 
 ```bash
