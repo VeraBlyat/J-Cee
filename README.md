@@ -102,7 +102,7 @@ Abre `http://localhost:3000`. Regístrate, sube un MP4 y reprodúcelo. ¡Listo!
 
 ---
 
-## Pendientes / a mejorar (fases siguientes)
+## TODO
 
 Estas cosas se dejaron fuera a propósito para mantener el MVP simple:
 
