@@ -1,4 +1,4 @@
-# UniStream — Plataforma de streaming universitaria
+# J&Cee
 
 App full-stack hecha con **Next.js (App Router) + PostgreSQL**. Versión MVP y local.
 
