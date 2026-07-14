@@ -1,5 +1,4 @@
-import { query } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { API_URL, serverFetch, getCurrentUser } from "@/lib/api";
 import CommentForm from "@/components/CommentForm";
 import { notFound } from "next/navigation";
 
@@ -9,25 +8,12 @@ export default async function VideoPage({ params }) {
   // En Next 15, params es una promesa: hay que esperarla.
   const { id } = await params;
 
-  const videoResult = await query(
-    `SELECT v.id, v.title, v.description, v.file_path, u.username
-       FROM videos v
-       LEFT JOIN users u ON u.id = v.user_id
-      WHERE v.id = $1`,
-    [id]
-  );
-  const video = videoResult.rows[0];
-  if (!video) notFound();
+  const videoRes = await serverFetch(`/videos/${id}`);
+  if (videoRes.status === 404) notFound();
+  const video = await videoRes.json();
 
-  const commentsResult = await query(
-    `SELECT c.id, c.content, c.created_at, u.username
-       FROM comments c
-       LEFT JOIN users u ON u.id = c.user_id
-      WHERE c.video_id = $1
-      ORDER BY c.created_at DESC`,
-    [id]
-  );
-  const comments = commentsResult.rows;
+  const commentsRes = await serverFetch(`/videos/${id}/comments`);
+  const comments = commentsRes.ok ? await commentsRes.json() : [];
 
   const user = await getCurrentUser();
 
@@ -35,7 +21,7 @@ export default async function VideoPage({ params }) {
     <div className="max-w-3xl mx-auto">
       {/* El navegador reproduce el MP4 directamente. controls muestra los botones. */}
       <video
-        src={video.file_path}
+        src={`${API_URL}${video.file_path}`}
         controls
         className="w-full rounded-lg bg-black"
       />

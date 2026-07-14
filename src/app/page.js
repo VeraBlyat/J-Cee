@@ -1,18 +1,13 @@
-import { query } from "@/lib/db";
+import { serverFetch } from "@/lib/api";
 import VideoCard from "@/components/VideoCard";
 
 // Forzamos render dinámico para que la lista se actualice al subir videos.
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  // Este componente corre en el SERVIDOR, así que puede consultar la BD directo.
-  const result = await query(
-    `SELECT v.id, v.title, v.file_path, u.username
-       FROM videos v
-       LEFT JOIN users u ON u.id = v.user_id
-      ORDER BY v.created_at DESC`
-  );
-  const videos = result.rows;
+  // Este componente corre en el SERVIDOR y pide la lista al backend Nest.
+  const res = await serverFetch("/videos");
+  const videos = res.ok ? await res.json() : [];
 
   return (
     <div>

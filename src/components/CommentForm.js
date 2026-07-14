@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { API_URL } from "@/lib/apiBase";
 
 export default function CommentForm({ videoId }) {
   const [content, setContent] = useState("");
@@ -12,8 +13,9 @@ export default function CommentForm({ videoId }) {
     if (!content.trim()) return;
     setLoading(true);
 
-    await fetch("/api/comments", {
+    await fetch(`${API_URL}/comments`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ videoId, content }),
     });

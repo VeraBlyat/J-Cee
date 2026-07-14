@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { API_URL } from "@/lib/apiBase";
 
 export default function UploadPage() {
   const [title, setTitle] = useState("");
@@ -25,7 +26,11 @@ export default function UploadPage() {
     formData.append("file", file);
 
     setLoading(true);
-    const res = await fetch("/api/videos", { method: "POST", body: formData });
+    const res = await fetch(`${API_URL}/videos`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
     setLoading(false);
 
     if (!res.ok) {

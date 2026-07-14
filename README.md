@@ -1,6 +1,15 @@
 # J&Cee
 
-App full-stack hecha con **Next.js (App Router) + PostgreSQL**. Versión MVP y local.
+App full-stack hecha con **Next.js (frontend) + Nest.js (backend) + PostgreSQL**.
+Versión MVP y local. Son **dos procesos**: el frontend en el puerto `3000` y el
+backend en el `3001`.
+
+## Documentación
+
+- 📐 [Arquitectura](docs/ARQUITECTURA.md) — cómo encajan frontend, backend y BD,
+  el flujo de datos, la autenticación y el modelo de datos.
+- 🔌 [Referencia de la API](docs/API.md) — todos los endpoints del backend, con
+  ejemplos de petición y respuesta.
 
 ---
 
@@ -13,32 +22,41 @@ App full-stack hecha con **Next.js (App Router) + PostgreSQL**. Versión MVP y l
 
 ## Cómo se organiza el código
 
-- **Páginas que solo muestran datos** (inicio y página de video) son *Componentes de
-  Servidor*: consultan la base de datos directamente con el helper de `src/lib/db.js`.
-- **Acciones que dispara el usuario** (registrarse, iniciar sesión, subir video,
-  comentar) pasan por la *API* en `src/app/api/.../route.js`.
-
-Ese es el patrón normal de Next.js App Router: leer en el servidor, y usar la API
-para las acciones que vienen del navegador.
+- El **backend Nest.js** (carpeta `backend/`) es el ÚNICO que habla con PostgreSQL.
+  Expone una API REST: autenticación, videos, comentarios y panel de admin. También
+  guarda los archivos subidos y los sirve en `/uploads`.
+- El **frontend Next.js** (carpeta `src/`) ya no toca la base de datos: pide todo
+  al backend por HTTP.
+  - Los *Componentes de Servidor* (inicio, página de video, navbar) usan
+    `serverFetch` de `src/lib/api.js`, que reenvía la cookie de sesión al backend.
+  - Los componentes de cliente (login, subir, comentar, admin) llaman al backend
+    con `fetch(..., { credentials: "include" })`.
 
 ```
-src/
+backend/                     -> API Nest.js (TypeScript)
+└── src/
+    ├── main.ts              -> arranque: CORS, cookies, /uploads estático
+    ├── database/            -> pool de PostgreSQL (DatabaseService)
+    ├── auth/                -> login/register/logout/me + guards de sesión y admin
+    ├── videos/             -> listar, detalle y subida (Multer)
+    ├── comments/           -> listar y crear comentarios
+    └── admin/               -> gestión de usuarios/videos/comentarios
+
+src/                         -> frontend Next.js
 ├── lib/
-│   ├── db.js          -> conexión a PostgreSQL
-│   └── auth.js        -> lee la sesión (cookie) y devuelve el usuario
+│   ├── api.js               -> serverFetch + getCurrentUser (llaman al backend)
+│   └── apiBase.js           -> URL base del backend (NEXT_PUBLIC_API_URL)
 ├── components/
-│   ├── Navbar.js      -> barra superior con la sesión
-│   ├── VideoCard.js   -> tarjeta de cada video en la galería
-│   └── CommentForm.js -> formulario de comentarios
+│   ├── Navbar.js            -> barra superior con la sesión
+│   ├── LogoutButton.js      -> cierra sesión llamando al backend
+│   ├── VideoCard.js         -> tarjeta de cada video en la galería
+│   └── CommentForm.js       -> formulario de comentarios
 └── app/
     ├── page.js              -> inicio: galería de videos
     ├── login/page.js        -> iniciar sesión / registrarse
-    ├── upload/page.js        -> subir un video
-    ├── videos/[id]/page.js   -> reproductor + comentarios de un video
-    └── api/
-        ├── auth/{register,login,logout}/route.js
-        ├── videos/route.js   -> recibe y guarda el video subido
-        └── comments/route.js -> guarda un comentario
+    ├── upload/page.js       -> subir un video
+    ├── videos/[id]/page.js  -> reproductor + comentarios de un video
+    └── admin/               -> panel de administración
 ```
 
 ---
@@ -61,26 +79,37 @@ psql -U postgres -d mi_streaming -f schema.sql
 
 ### 2. Configurar la conexión
 
-Copia el archivo de ejemplo y pon TU contraseña:
+**Backend** (`backend/.env`): copia el ejemplo y pon TU contraseña de Postgres:
 
 ```bash
-cp .env.local.example .env.local
+cp backend/.env.example backend/.env
 ```
 
-Edita `.env.local` y cambia `TU_PASSWORD` por la contraseña real de `postgres`.
+Edita `backend/.env` y ajusta `DATABASE_URL`. Ahí también viven `PORT` (3001) y
+`FRONTEND_ORIGIN` (http://localhost:3000).
+
+**Frontend** (`.env.local`): apunta al backend (ya viene con el valor por defecto):
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
 
 ### 3. Instalar dependencias
 
-Estas son las dependencias que ya trae `create-next-app`, más el conector de Postgres:
+Frontend y backend tienen sus propias dependencias:
 
 ```bash
-npm install
-npm install pg
+npm install                 # frontend (raíz del repo)
+npm install --prefix backend  # backend Nest.js
 ```
 
-### 4. Arrancar la app
+### 4. Arrancar la app (dos terminales)
 
 ```bash
+# Terminal 1 — backend Nest.js (puerto 3001)
+npm run start:dev --prefix backend
+
+# Terminal 2 — frontend Next.js (puerto 3000)
 npm run dev
 ```
 
@@ -103,7 +132,7 @@ Abre `http://localhost:3000`. Regístrate, sube un MP4 y reprodúcelo. ¡Listo!
 Estas cosas se dejaron fuera a propósito para mantener el MVP simple:
 
 - **Seguridad:** Encriptacion de contraseñas con bcrypt.
-- **Almacenamiento en la nube:** Los videos se guardan en`/public/uploads`. Solo para uso local. Implementar Azure para
+- **Almacenamiento en la nube:** Los videos se guardan en `backend/uploads`. Solo para uso local. Implementar Azure para
   almacenamiento en la nube.
 - **Videos grandes:** Para archivos muy pesados haría falta subida por partes (chunks). Diferentes niveles de calidad
   (480p, 720p, 1080p, etc)

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/api";
+import LogoutButton from "@/components/LogoutButton";
 
 // Componente de servidor: puede leer la sesión directamente.
 export default async function Navbar() {
@@ -22,11 +23,14 @@ export default async function Navbar() {
               <Link href="/upload" className="hover:text-red-400">
                 Subir video
               </Link>
+              {user.is_admin && (
+                <Link href="/admin" className="hover:text-red-400 text-yellow-400">
+                  Admin
+                </Link>
+              )}
               <span className="text-gray-400">Hola, {user.username}</span>
-              {/* Un form normal que hace POST y el servidor redirige de vuelta. */}
-              <form action="/api/auth/logout" method="post">
-                <button className="hover:text-red-400">Salir</button>
-              </form>
+              {/* Botón de cliente que llama al backend Nest y refresca. */}
+              <LogoutButton />
             </>
           ) : (
             <Link href="/login" className="hover:text-red-400">

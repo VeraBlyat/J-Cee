@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { API_URL } from "@/lib/apiBase";
 
 export default function LoginPage() {
   const [mode, setMode] = useState("login"); // "login" o "register"
@@ -13,10 +14,11 @@ export default function LoginPage() {
   async function handleSubmit() {
     setError("");
     const endpoint =
-      mode === "login" ? "/api/auth/login" : "/api/auth/register";
+      mode === "login" ? "/auth/login" : "/auth/register";
 
-    const res = await fetch(endpoint, {
+    const res = await fetch(`${API_URL}${endpoint}`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });

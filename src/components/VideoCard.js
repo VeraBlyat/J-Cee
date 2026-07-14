@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { API_URL } from "@/lib/apiBase";
 
 export default function VideoCard({ video }) {
   return (
@@ -7,7 +8,7 @@ export default function VideoCard({ video }) {
         {/* Truco simple para la miniatura: mostramos un frame del propio video.
             El "#t=0.5" le pide al navegador el fotograma del segundo 0.5. */}
         <video
-          src={`${video.file_path}#t=0.5`}
+          src={`${API_URL}${video.file_path}#t=0.5`}
           className="w-full h-full object-cover"
           preload="metadata"
           muted
