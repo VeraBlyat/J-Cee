@@ -68,13 +68,13 @@ src/                         -> frontend Next.js
 Abre una terminal de PostgreSQL (`psql -U postgres`) y crea la base:
 
 ```sql
-CREATE DATABASE mi_streaming;
+CREATE DATABASE jandcee;
 ```
 
 Sal de psql (`\q`) y carga las tablas con el archivo `schema.sql`:
 
 ```bash
-psql -U postgres -d mi_streaming -f schema.sql
+psql -U postgres -d jandcee -f schema.sql
 ```
 
 ### 2. Configurar la conexión
