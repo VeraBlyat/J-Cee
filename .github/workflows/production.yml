@@ -1,0 +1,80 @@
+name: CI/CD - Production
+
+on:
+  push:
+    branches: [production]
+  pull_request:
+    branches: [production]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests unitarios
+        run: npm run test -- --ci
+
+      - name: Build de producción
+        run: npm run build
+
+  docker-build-push:
+    needs: build-and-test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login a Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build de imagen Docker
+        run: docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/unistream:${{ github.sha }} -t ${{ secrets.ACR_LOGIN_SERVER }}/unistream:latest .
+
+      - name: Push de imagen a ACR
+        run: |
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/unistream:${{ github.sha }}
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/unistream:latest
+
+  deploy-azure:
+    needs: docker-build-push
+    if: github.ref == 'refs/heads/production' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Login a Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Ejecutar migraciones de base de datos
+        run: |
+          az webapp ssh --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --name ${{ secrets.AZURE_WEBAPP_NAME }} \
+            --command "npm run migrate" || true
+
+      - name: Desplegar imagen en Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/unistream:${{ github.sha }}
+
+      - name: Verificar salud del servicio
+        run: |
+          sleep 20
+          curl -f https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/health || exit 1

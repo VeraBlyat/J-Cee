@@ -1,0 +1,58 @@
+name: CI - QA Frontend
+
+on:
+  push:
+    branches: [qa-front]
+  pull_request:
+    branches: [qa-front]
+
+jobs:
+  lint-and-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Tests unitarios (Jest)
+        run: npm run test -- --ci --coverage
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+
+  e2e-cypress:
+    needs: lint-and-unit
+    runs-on: [self-hosted, qa-laptop]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Levantar app en modo build
+        run: |
+          npm run build
+          npm run start &
+
+      - name: Esperar a que el servidor responda
+        run: npx wait-on http://localhost:3000
+
+      - name: Ejecutar pruebas E2E con Cypress
+        run: npx cypress run
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots

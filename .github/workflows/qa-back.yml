@@ -1,0 +1,49 @@
+name: CI - QA Backend
+
+on:
+  push:
+    branches: [qa-back]
+  pull_request:
+    branches: [qa-back]
+
+jobs:
+  test-backend:
+    runs-on: [self-hosted, qa-laptop]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: unistream
+          POSTGRES_PASSWORD: unistream_test
+          POSTGRES_DB: unistream_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar migraciones sobre BD de pruebas
+        run: npm run migrate
+        env:
+          DATABASE_URL: postgres://unistream:unistream_test@localhost:5432/unistream_test
+
+      - name: Tests unitarios de rutas/API (Jest)
+        run: npm run test:api -- --ci
+        env:
+          DATABASE_URL: postgres://unistream:unistream_test@localhost:5432/unistream_test
+
+      - name: Pruebas de integración (Postman/Newman)
+        run: npx newman run tests/postman/unistream-collection.json --environment tests/postman/qa.postman_environment.json
