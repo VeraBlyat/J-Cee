@@ -7,7 +7,13 @@ async function main() {
   const schemaPath = path.join(__dirname, '..', '..', 'schema.sql');
   const sql = fs.readFileSync(schemaPath, 'utf8');
 
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl:
+      process.env.DATABASE_SSL === 'true'
+        ? { rejectUnauthorized: false }
+        : undefined,
+  });
   try {
     await pool.query(sql);
     console.log('Migraciones aplicadas correctamente.');
