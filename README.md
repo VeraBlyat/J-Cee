@@ -6,11 +6,11 @@ backend en el `3001`.
 
 ## Documentación
 
-- 📐 [Arquitectura](docs/ARQUITECTURA.md) — cómo encajan frontend, backend y BD,
+- [Arquitectura](docs/ARQUITECTURA.md) — cómo encajan frontend, backend y BD,
   el flujo de datos, la autenticación y el modelo de datos.
-- 🔌 [Referencia de la API](docs/API.md) — todos los endpoints del backend, con
+- [Referencia de la API](docs/API.md) — todos los endpoints del backend, con
   ejemplos de petición y respuesta.
-- 🌿 [Cómo contribuir](CONTRIBUTING.md) — flujo de ramas, commits y Pull
+- [Cómo contribuir](CONTRIBUTING.md) — flujo de ramas, commits y Pull
   Requests.
 
 ---
