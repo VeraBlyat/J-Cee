@@ -1,4 +1,4 @@
-import { API_URL, serverFetch, getCurrentUser } from "@/lib/api";
+import { serverFetch, getCurrentUser } from "@/lib/api";
 import CommentForm from "@/components/CommentForm";
 import { notFound } from "next/navigation";
 
@@ -19,9 +19,10 @@ export default async function VideoPage({ params }) {
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* El navegador reproduce el MP4 directamente. controls muestra los botones. */}
+      {/* El navegador reproduce el MP4 directamente. controls muestra los botones.
+          file_path ya es una ruta pública ("/uploads/..."), no necesita prefijo. */}
       <video
-        src={`${API_URL}${video.file_path}`}
+        src={video.file_path}
         controls
         className="w-full rounded-lg bg-black"
       />

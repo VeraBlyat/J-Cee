@@ -7,7 +7,7 @@ on:
     branches: [production]
 
 jobs:
-  build-and-test:
+  build-and-test-frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,8 +29,31 @@ jobs:
       - name: Build de producción
         run: npm run build
 
+  build-and-test-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Tests unitarios
+        run: npm run test -- --ci
+
+      - name: Build de producción
+        run: npm run build
+
   docker-build-push:
-    needs: build-and-test
+    needs: [build-and-test-frontend, build-and-test-backend]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
@@ -61,12 +84,6 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Ejecutar migraciones de base de datos
-        run: |
-          az webapp ssh --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --name ${{ secrets.AZURE_WEBAPP_NAME }} \
-            --command "npm run migrate" || true
 
       - name: Desplegar imagen en Azure App Service
         uses: azure/webapps-deploy@v3
