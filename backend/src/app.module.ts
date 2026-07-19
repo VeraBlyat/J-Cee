@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { VideosModule } from './videos/videos.module';
 import { CommentsModule } from './comments/comments.module';
 import { AdminModule } from './admin/admin.module';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -13,5 +14,6 @@ import { AdminModule } from './admin/admin.module';
     CommentsModule,
     AdminModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}
