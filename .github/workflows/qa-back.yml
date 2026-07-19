@@ -64,7 +64,7 @@ jobs:
           PORT: 3001
 
       - name: Esperar a que el backend responda
-        run: npx wait-on http://localhost:3001/videos
+        run: npx wait-on http://localhost:3001/api/health
 
       - name: Pruebas de integración (Postman/Newman)
         run: npx newman run tests/postman/unistream-collection.json --environment tests/postman/qa.postman_environment.json
