@@ -1,1 +1,28 @@
 @import "tailwindcss";
+
+/* - - - - - NOTA IMPORTANTE - - - - - */
+/*LA PALETA DE COLORES EN CLARO VA DE ARRIBA A ABAJO 
+(SE VA A HACIENDO MAS CLARO EMPEZANDO POR EL PRIMARIO)
+
+EN CAMBIO LA PALETA DE LOS OSCUROS VA DE ABAJO A ARRIBA
+(SE VA HACIENDO MAS OSCURO EMPEZANDO POR EL PRIMARIO)*/
+
+/*COLORES EN MODO CLARO */
+@theme {
+    --color-primary: #187f0f;
+    --color-lpg: #4b9f3d;
+    --color-mlg: #7ebf6b;
+    --color-sg: #b0df99;
+    --color-slg: #e3ffc7;
+
+}
+
+/*COLORES EN MODO OSCURO*/
+
+.dark {
+    --color-primary: "#187f0f";
+    --color-lpg: "#13660c";
+    --color-mlg: "#0d4d09";
+    --color-sg: "#083306";
+    --color-slg: "#031a03";
+}
