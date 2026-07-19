@@ -1,6 +1,7 @@
 node_modules
 .next
 .env.local
+coverage
 # No subimos los videos al repositorio
 /public/uploads/*
 !/public/uploads/.gitkeep
