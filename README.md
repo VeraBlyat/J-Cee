@@ -10,6 +10,8 @@ backend en el `3001`.
   el flujo de datos, la autenticación y el modelo de datos.
 - 🔌 [Referencia de la API](docs/API.md) — todos los endpoints del backend, con
   ejemplos de petición y respuesta.
+- 🌿 [Cómo contribuir](CONTRIBUTING.md) — flujo de ramas, commits y Pull
+  Requests.
 
 ---
 
