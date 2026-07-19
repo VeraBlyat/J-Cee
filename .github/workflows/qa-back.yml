@@ -9,6 +9,9 @@ on:
 jobs:
   test-backend:
     runs-on: [self-hosted, qa-laptop]
+    defaults:
+      run:
+        working-directory: backend
     services:
       postgres:
         image: postgres:16
@@ -31,19 +34,41 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
 
       - name: Instalar dependencias
         run: npm ci
 
+      # host.docker.internal (no localhost): el runner self-hosted corre en su propio
+      # contenedor, así que el "localhost" del servicio postgres (publicado por el
+      # daemon de Docker) no es el mismo que el del runner.
       - name: Ejecutar migraciones sobre BD de pruebas
         run: npm run migrate
         env:
-          DATABASE_URL: postgres://unistream:unistream_test@localhost:5432/unistream_test
+          DATABASE_URL: postgres://unistream:unistream_test@host.docker.internal:5432/unistream_test
 
       - name: Tests unitarios de rutas/API (Jest)
         run: npm run test:api -- --ci
         env:
-          DATABASE_URL: postgres://unistream:unistream_test@localhost:5432/unistream_test
+          DATABASE_URL: postgres://unistream:unistream_test@host.docker.internal:5432/unistream_test
+
+      - name: Compilar backend
+        run: npm run build
+
+      - name: Levantar backend para pruebas de integración
+        run: |
+          npm run start:prod &
+          echo $! > backend.pid
+        env:
+          DATABASE_URL: postgres://unistream:unistream_test@host.docker.internal:5432/unistream_test
+          PORT: 3001
+
+      - name: Esperar a que el backend responda
+        run: npx wait-on http://localhost:3001/videos
 
       - name: Pruebas de integración (Postman/Newman)
         run: npx newman run tests/postman/unistream-collection.json --environment tests/postman/qa.postman_environment.json
+
+      - name: Detener backend
+        if: always()
+        run: kill "$(cat backend.pid)" 2>/dev/null || true
