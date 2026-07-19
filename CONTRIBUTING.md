@@ -58,7 +58,7 @@ Mensajes de commit cortos y en modo imperativo. Si seguís
 ### 4. Subir la rama
 
 ```bash
-git push -u <nombre de la rama que te corresponde> feature/nombre-corto-de-la-tarea
+git push -u origin feature/nombre-corto-de-la-tarea
 ```
 
 ### 5. Abrir el Pull Request
