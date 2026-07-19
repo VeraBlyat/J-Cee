@@ -14,7 +14,7 @@ export default async function HomePage() {
       <h1 className="text-2xl font-bold mb-6">Videos recientes</h1>
 
       {videos.length === 0 ? (
-        <p className="text-gray-400">
+        <p className="text-lpg">
           Todavía no hay videos. ¡Sé el primero en subir uno!
         </p>
       ) : (
