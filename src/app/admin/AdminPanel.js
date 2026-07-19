@@ -8,7 +8,6 @@ function UsersTab() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    setLoading(true);
     const res = await fetch(`${API_URL}/admin/users`, {
       credentials: "include",
     });
@@ -16,6 +15,7 @@ function UsersTab() {
     setLoading(false);
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount intencional, sin librería de data fetching todavía.
   useEffect(() => { load(); }, [load]);
 
   async function toggleAdmin(user) {
@@ -99,7 +99,6 @@ function VideosTab() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    setLoading(true);
     const res = await fetch(`${API_URL}/admin/videos`, {
       credentials: "include",
     });
@@ -107,6 +106,7 @@ function VideosTab() {
     setLoading(false);
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount intencional, sin librería de data fetching todavía.
   useEffect(() => { load(); }, [load]);
 
   async function deleteVideo(id) {
@@ -169,7 +169,6 @@ function CommentsTab() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    setLoading(true);
     const res = await fetch(`${API_URL}/admin/comments`, {
       credentials: "include",
     });
@@ -177,6 +176,7 @@ function CommentsTab() {
     setLoading(false);
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount intencional, sin librería de data fetching todavía.
   useEffect(() => { load(); }, [load]);
 
   async function deleteComment(id) {
