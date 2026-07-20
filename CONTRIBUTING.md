@@ -18,6 +18,8 @@ Request.
 
 ## Flujo paso a paso
 
+#ANTES DE EMPEZAR TU TRABAJO
+
 ### 1. Actualizar tu copia local
 
 ```bash
@@ -32,6 +34,8 @@ Nace desde `qa-front` o `qa-back` (no desde `production`):
 ```bash
 git checkout -b feature/nombre-corto-de-la-tarea
 ```
+
+#DESPUES DE HACER TU TRABAJO
 
 Prefijos sugeridos:
 
