@@ -8,7 +8,7 @@ on:
 
 jobs:
   test-backend:
-    runs-on: [self-hosted, qa-laptop]
+    runs-on: [self-hosted, laptop]
     defaults:
       run:
         working-directory: backend
