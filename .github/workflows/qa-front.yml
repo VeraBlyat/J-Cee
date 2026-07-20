@@ -40,13 +40,17 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Liberar puerto 3000 (por si quedó un proceso previo)
+        run: fuser -k 3000/tcp || true
+
       - name: Levantar app en modo build
         run: |
           npm run build
           npm run start &
+          echo $! > app.pid
 
       - name: Esperar a que el servidor responda
-        run: npx wait-on http://localhost:3000
+        run: npx wait-on http://localhost:3000 --timeout 60000
 
       - name: Ejecutar pruebas E2E con Cypress
         run: npx cypress run
@@ -56,3 +60,7 @@ jobs:
         with:
           name: cypress-screenshots
           path: cypress/screenshots
+
+      - name: Detener servidor
+        if: always()
+        run: kill "$(cat app.pid)" 2>/dev/null || true
