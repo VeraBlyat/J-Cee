@@ -93,7 +93,7 @@ Edita `backend/.env` y ajusta `DATABASE_URL`. Ahí también viven `PORT` (3001) 
 **Frontend** (`.env.local`): apunta al backend (ya viene con el valor por defecto):
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ```
 
 ### 3. Instalar dependencias

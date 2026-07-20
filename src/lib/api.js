@@ -1,8 +1,5 @@
 import { cookies } from "next/headers";
-import { API_URL } from "./apiBase";
-
-// Re-exportamos API_URL para los componentes de servidor que ya importan de aquí.
-export { API_URL };
+import { INTERNAL_API_URL } from "./apiBase";
 
 // Fetch para COMPONENTES DE SERVIDOR: reenvía la cookie de sesión del usuario
 // al backend y nunca cachea (la sesión y los datos cambian a cada rato).
@@ -10,7 +7,7 @@ export async function serverFetch(path, options = {}) {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
-  return fetch(`${API_URL}${path}`, {
+  return fetch(`${INTERNAL_API_URL}${path}`, {
     ...options,
     cache: "no-store",
     headers: {

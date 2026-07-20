@@ -5,8 +5,15 @@ import { Pool, QueryResult, QueryResultRow } from 'pg';
 // (Antes esto vivía en src/lib/db.js del proyecto Next.)
 @Injectable()
 export class DatabaseService implements OnModuleDestroy {
+  // Azure Database for PostgreSQL exige SSL; localhost no lo soporta.
+  // DATABASE_SSL=true lo activa (con rejectUnauthorized:false porque Azure
+  // firma con una CA propia que no viene en el store por defecto de Node).
   private readonly pool = new Pool({
     connectionString: process.env.DATABASE_URL,
+    ssl:
+      process.env.DATABASE_SSL === 'true'
+        ? { rejectUnauthorized: false }
+        : undefined,
   });
 
   // Helper para consultar: query("SELECT ... WHERE id = $1", [valor])

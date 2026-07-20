@@ -9,6 +9,11 @@ import { HttpExceptionFilter } from './common/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  // Todas las rutas de la API quedan bajo /api (el healthcheck de Azure y el
+  // proxy del frontend en producción dependen de este prefijo). Los archivos
+  // estáticos de /uploads quedan afuera: useStaticAssets no pasa por acá.
+  app.setGlobalPrefix('api');
+
   // Lee cookies (usamos "userId" como sesión, igual que antes en Next).
   app.use(cookieParser());
 
