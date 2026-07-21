@@ -46,7 +46,9 @@ jobs:
       - name: Levantar app en modo build
         run: |
           npm run build
-          npm run start &
+          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/.next/static
+          PORT=3000 node .next/standalone/server.js &
           echo $! > app.pid
 
       - name: Esperar a que el servidor responda
