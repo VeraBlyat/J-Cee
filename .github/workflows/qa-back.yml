@@ -67,7 +67,7 @@ jobs:
         run: npx wait-on http://localhost:3001/api/health --timeout 60000
 
       - name: Pruebas de integración (Postman/Newman)
-        run: npx newman run tests/postman/unistream-collection.json --environment tests/postman/qa.postman_environment.json
+        run: npx newman run tests/postman/unistream-collection.json --environment tests/postman/qa.postman_environment.json --timeout-request 15000
 
       - name: Detener backend
         if: always()
