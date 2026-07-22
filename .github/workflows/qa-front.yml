@@ -33,7 +33,7 @@ jobs:
 
   e2e-cypress:
     needs: lint-and-unit
-    runs-on: [self-hosted, laptop]
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:16
