@@ -6,8 +6,8 @@ describe("Smoke", () => {
 
   it("carga la pantalla de login", () => {
     cy.visit("/login");
-    cy.contains("h1", "Bienvenido de vuelta").should("be.visible");
-    cy.get("#usuario").should("be.visible");
-    cy.get("#password").should("be.visible");
+    cy.contains("h1", "Iniciar sesión").should("be.visible");
+    cy.get("input[placeholder='Usuario']").should("be.visible");
+    cy.get("input[placeholder='Contraseña']").should("be.visible");
   });
 });
