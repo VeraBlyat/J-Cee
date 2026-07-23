@@ -8,8 +8,8 @@ No usamos `main`/`master`. Las ramas de integración son:
 
 - **`production`** — rama principal. Al hacer push acá se dispara el build de
   Docker y el deploy a Azure (`.github/workflows/production.yml`).
-- **`qa-front`** — integración de frontend. Corre lint + tests unitarios +
-  Cypress (`.github/workflows/qa-front.yml`).
+- **`qa-front`** — integración de frontend. Corre lint + tests unitarios
+  (`.github/workflows/qa-front.yml`).
 - **`qa-back`** — integración de backend. Corre migraciones + tests de API +
   Postman/Newman (`.github/workflows/qa-back.yml`).
 
@@ -46,7 +46,7 @@ Prefijos sugeridos:
 | `hotfix/`   | Corrección urgente sobre producción |
 | `chore/`    | Tareas de mantenimiento, configs    |
 
-Ejemplos: `feature/login-google`, `fix/cypress-timeout`.
+Ejemplos: `feature/login-google`, `fix/session-timeout`.
 
 ### 3. Commitear
 
