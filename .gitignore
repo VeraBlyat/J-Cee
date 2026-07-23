@@ -5,8 +5,3 @@ coverage
 # No subimos los videos al repositorio
 /public/uploads/*
 !/public/uploads/.gitkeep
-
-# Artefactos de Cypress (se generan en cada corrida)
-/cypress/screenshots
-/cypress/videos
-/cypress/downloads

@@ -10,4 +10,9 @@ export const API_URL =
 // (serverFetch). Nunca llega al navegador (no lleva NEXT_PUBLIC_), así que
 // en producción puede seguir apuntando directo al backend por localhost
 // aunque el navegador no tenga acceso directo a ese puerto.
-export const INTERNAL_API_URL = process.env.INTERNAL_API_URL || API_URL;
+// OJO: no debe caer en API_URL como default, porque en producción API_URL
+// suele ser una ruta relativa ("/api") pensada para el rewrite de Next, y
+// una ruta relativa no es una URL válida para el `fetch` de Node en el
+// servidor (rompe con "Failed to parse URL from /api/...").
+export const INTERNAL_API_URL =
+  process.env.INTERNAL_API_URL || "http://localhost:3001/api";
