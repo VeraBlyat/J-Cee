@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { API_URL } from "@/lib/apiBase";
+import { useDispatch } from "react-redux";
+import { login, register } from "@/store/authSlice";
 
 // Pez de J-Ceen. Usa currentColor, así sirve claro sobre el panel y verde sobre el form.
 function LogoMark({ className = "h-6 w-8" }) {
@@ -33,33 +34,26 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const isLogin = mode === "login";
 
   async function handleSubmit() {
     setError("");
     setLoading(true);
-    const endpoint = isLogin ? "/auth/login" : "/auth/register";
+    const action = isLogin ? login : register;
 
     try {
-      const res = await fetch(`${API_URL}${endpoint}`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      // El thunk (Axios) hace login/register y guarda el usuario en el store.
+      // unwrap() lanza si el backend rechazó, con el mensaje de rejectWithValue.
+      await dispatch(action({ username, password })).unwrap();
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || "Ocurrió un error.");
-        return;
-      }
-
-      // Sesión iniciada: vamos al inicio y refrescamos para que el navbar cambie.
+      // Sesión iniciada: el navbar ya reaccionó vía Redux; vamos al inicio y
+      // refrescamos para re-sincronizar los componentes de servidor.
       router.push("/");
       router.refresh();
-    } catch {
-      setError("No se pudo conectar con el servidor.");
+    } catch (err) {
+      setError(typeof err === "string" ? err : "No se pudo conectar con el servidor.");
     } finally {
       setLoading(false);
     }
