@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { API_URL } from "@/lib/apiBase";
+import http from "@/lib/http";
 
 export default function CommentForm({ videoId }) {
   const [content, setContent] = useState("");
@@ -13,16 +13,13 @@ export default function CommentForm({ videoId }) {
     if (!content.trim()) return;
     setLoading(true);
 
-    await fetch(`${API_URL}/comments`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ videoId, content }),
-    });
-
-    setContent("");
-    setLoading(false);
-    router.refresh(); // recarga el componente de servidor y muestra el comentario nuevo
+    try {
+      await http.post("/comments", { videoId, content });
+      setContent("");
+      router.refresh(); // recarga el componente de servidor y muestra el comentario nuevo
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
