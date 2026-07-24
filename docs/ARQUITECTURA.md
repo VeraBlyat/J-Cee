@@ -6,7 +6,7 @@ separados:
 
 | Proceso            | Carpeta    | Puerto | Tecnología           | Responsabilidad                              |
 | ------------------ | ---------- | ------ | -------------------- | -------------------------------------------- |
-| **Frontend**       | `src/`     | `3000` | Next.js (App Router) | Renderiza la interfaz. No toca la BD.        |
+| **Frontend**       | `src/`     | `3000` | Next.js + Redux + Axios | Renderiza la interfaz. No toca la BD.     |
 | **Backend / API**  | `backend/` | `3001` | Nest.js (TypeScript) | Lógica, PostgreSQL, archivos, autenticación. |
 | **Base de datos**  | —          | `5432` | PostgreSQL           | Usuarios, videos y comentarios.              |
 
@@ -53,8 +53,8 @@ El frontend obtiene datos de **dos maneras**, según dónde corre el componente:
 
 ### Componentes de servidor (leer datos)
 
-Páginas como el inicio, la página de un video, el `Navbar` y la puerta de
-`/admin` corren en el servidor de Next. Usan `serverFetch` de
+Páginas como el inicio, la página de un video y el `layout` (que resuelve la
+sesión inicial) corren en el servidor de Next. Usan `serverFetch` de
 [`src/lib/api.js`](../src/lib/api.js), que:
 
 - Llama al backend (`GET /videos`, `/auth/me`, etc.).
@@ -62,12 +62,40 @@ Páginas como el inicio, la página de un video, el `Navbar` y la puerta de
   sepa quién está pidiendo.
 - Nunca cachea (`cache: "no-store"`), así los datos siempre están frescos.
 
+La URL usada aquí es `INTERNAL_API_URL` (servidor-a-servidor); ver
+[`src/lib/apiBase.js`](../src/lib/apiBase.js).
+
 ### Componentes de cliente (acciones del usuario)
 
-Formularios como login, subir video, comentar y el panel de admin corren en el
-navegador. Llaman al backend con `fetch(..., { credentials: "include" })` para
-que la cookie viaje en la petición. La URL base del backend vive en
-[`src/lib/apiBase.js`](../src/lib/apiBase.js) (`NEXT_PUBLIC_API_URL`).
+Formularios como login, subir video, comentar, cerrar sesión y el panel de admin
+corren en el navegador. En vez de `fetch` sueltos, todos usan el cliente **Axios**
+central [`src/lib/http.js`](../src/lib/http.js), que:
+
+- Fija la `baseURL` en la API del backend (`NEXT_PUBLIC_API_URL`, de
+  [`src/lib/apiBase.js`](../src/lib/apiBase.js)).
+- Manda siempre la cookie de sesión con `withCredentials: true` (lo que antes era
+  `credentials: "include"`).
+
+### Estado global de la sesión (Redux Toolkit)
+
+El usuario actual vive en un **store de Redux Toolkit** ([`src/store/`](../src/store)),
+para que cualquier componente de cliente lo lea sin volver a pedirlo:
+
+- [`store.js`](../src/store/store.js) — `makeStore(preloadedState)` crea **un store
+  por request/cliente** (clave en Next para no compartir estado entre usuarios en
+  el servidor) y permite hidratarlo con datos ya resueltos.
+- [`authSlice.js`](../src/store/authSlice.js) — guarda `user` y expone los thunks
+  `login`, `register` y `logout` (usan Axios y hablan con `/auth/*`), más la acción
+  `setUser` para hidratar la sesión.
+- [`ReduxProvider.js`](../src/components/ReduxProvider.js) — componente de cliente
+  que monta el `Provider`. El [`layout.js`](../src/app/layout.js) resuelve la
+  sesión en el servidor (`getCurrentUser`) y se la pasa como `initialUser` para
+  hidratar el store, así el `Navbar` muestra al usuario desde el primer render
+  **sin parpadeo**.
+
+El `Navbar` es ahora un **componente de cliente** que lee `state.auth.user` con
+`useSelector`, por lo que reacciona al instante cuando alguien inicia o cierra
+sesión, sin recargar la página.
 
 ---
 
@@ -87,6 +115,11 @@ El flujo:
    - `AuthGuard` — exige sesión válida; si no, responde `401`.
    - `AdminGuard` — exige que el usuario sea admin; si no, responde `403`.
 5. `POST /auth/logout` borra la cookie.
+
+En el frontend, los thunks `login` / `register` / `logout` del `authSlice`
+disparan estas peticiones (vía Axios) y actualizan `state.auth.user`, así el
+`Navbar` refleja el cambio al momento. Tras iniciar/cerrar sesión también se llama
+a `router.refresh()` para re-sincronizar los componentes de servidor.
 
 ### ¿Por qué funciona la cookie entre dos puertos?
 
@@ -151,13 +184,19 @@ J-Cee/
 └── src/                     -> frontend Next.js
     ├── lib/
     │   ├── api.js           -> serverFetch + getCurrentUser (para el servidor)
-    │   └── apiBase.js       -> URL base del backend (para cliente y servidor)
+    │   ├── apiBase.js       -> URLs del backend (pública e interna)
+    │   └── http.js          -> cliente Axios central (para el navegador)
+    ├── store/               -> Redux Toolkit
+    │   ├── store.js         -> makeStore (un store por request/cliente)
+    │   └── authSlice.js     -> usuario global + thunks login/register/logout
     ├── components/
-    │   ├── Navbar.js        -> barra superior con la sesión
-    │   ├── LogoutButton.js  -> cierra sesión llamando al backend
+    │   ├── ReduxProvider.js -> monta el store e hidrata la sesión inicial
+    │   ├── Navbar.js        -> barra superior (cliente, lee la sesión del store)
+    │   ├── LogoutButton.js  -> cierra sesión (thunk) y limpia el store
     │   ├── VideoCard.js     -> tarjeta de cada video
     │   └── CommentForm.js   -> formulario de comentarios
     └── app/
+        ├── layout.js            -> resuelve la sesión e hidrata el ReduxProvider
         ├── page.js              -> inicio: galería de videos
         ├── login/page.js        -> iniciar sesión / registrarse
         ├── upload/page.js       -> subir un video
