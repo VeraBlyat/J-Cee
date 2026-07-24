@@ -17,7 +17,7 @@ export default function LogoutButton() {
   }
 
   return (
-    <button onClick={handleLogout} className="hover:text-red-400">
+    <button onClick={handleLogout} className="text-card hover:text-sbtxt">
       Salir
     </button>
   );

@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function VideoCard({ video }) {
   return (
     <Link href={`/videos/${video.id}`} className="group block">
-      <div className="aspect-video bg-black rounded-lg overflow-hidden">
+      <div className="aspect-video bg-bkg rounded-lg overflow-hidden">
         {/* Truco simple para la miniatura: mostramos un frame del propio video.
             El "#t=0.5" le pide al navegador el fotograma del segundo 0.5.
             file_path ya es una ruta pública ("/uploads/..."), no necesita prefijo. */}
@@ -14,10 +14,10 @@ export default function VideoCard({ video }) {
           muted
         />
       </div>
-      <h3 className="mt-2 font-medium group-hover:text-red-400 line-clamp-2">
+      <h3 className="mt-2 font-medium group-hover:text-txt line-clamp-2">
         {video.title}
       </h3>
-      <p className="text-sm text-gray-400">{video.username || "Anónimo"}</p>
+      <p className="text-sm text-sbtxt">{video.username || "Anónimo"}</p>
     </Link>
   );
 }
