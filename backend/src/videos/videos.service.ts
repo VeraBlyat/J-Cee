@@ -1,14 +1,20 @@
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { Injectable } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { DatabaseService } from '../database/database.service';
+import { VideoTranscodeJob } from './video-transcode.processor';
 
 // Carpeta donde guardamos los videos subidos (Nest la sirve en /uploads).
 export const UPLOAD_DIR = join(process.cwd(), 'uploads');
 
 @Injectable()
 export class VideosService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    @InjectQueue('video-transcode') private readonly transcodeQueue: Queue,
+  ) {}
 
   // Lista para la página de inicio.
   async findAll() {
@@ -33,7 +39,7 @@ export class VideosService {
     return result.rows[0] || null;
   }
 
-  // Guarda el archivo en disco y crea la fila del video. Devuelve el id nuevo.
+  // Guarda el archivo en disco, crea la fila del video y encola el transcode. Devuelve el id nuevo.
   async create(
     title: string,
     description: string,
@@ -52,11 +58,22 @@ export class VideosService {
     // En la BD guardamos la ruta pública (lo que irá en el src del <video>).
     const filePath = `/uploads/${fileName}`;
 
+    // status arranca en 'queued' por el DEFAULT que agregamos en schema.sql
     const result = await this.db.query(
       `INSERT INTO videos (title, description, file_path, user_id)
        VALUES ($1, $2, $3, $4) RETURNING id`,
       [title, description, filePath, userId],
     );
-    return result.rows[0].id;
+    const videoId = result.rows[0].id;
+
+    // Encolamos el job de transcodificación. Reintentos con backoff para
+    // fallos transitorios de ffmpeg (ej. el worker se queda sin memoria un segundo).
+    await this.transcodeQueue.add(
+      'transcode',
+      { videoId, sourcePath: join(UPLOAD_DIR, fileName) } as VideoTranscodeJob,
+      { attempts: 2, backoff: { type: 'exponential', delay: 5000 } },
+    );
+
+    return videoId;
   }
 }
