@@ -18,6 +18,15 @@ CREATE TABLE IF NOT EXISTS videos (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- CREATE TABLE IF NOT EXISTS no agrega columnas a una tabla que ya existe,
+-- por eso usamos ALTER TABLE ... ADD COLUMN IF NOT EXISTS (idempotente,
+-- necesario porque migrate.js corre en cada arranque del contenedor).
+ALTER TABLE videos
+  ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'queued';
+
+ALTER TABLE videos
+  ADD COLUMN IF NOT EXISTS hls_path VARCHAR(255);  -- Ruta relativa al .m3u8 maestro (no URL completa); null hasta que termine el procesamiento
+
 CREATE TABLE IF NOT EXISTS comments (
   id SERIAL PRIMARY KEY,
   video_id INTEGER REFERENCES videos(id) ON DELETE CASCADE,
