@@ -1,1 +1,69 @@
 @import "tailwindcss";
+
+/* ================================
+   MODO CLARO
+   primary → oscuro (acción)
+   los tonos van aclarando hacia el fondo
+   ================================ */
+@theme {
+    /* Acción: botones, navbar, íconos activos */
+    --color-primary: #187f0f;
+
+    /* Superficies */
+    --color-surface: #4b9f3d;
+    /* panel destacado, sidebar */
+    --color-card: #b0df99;
+    /* card / contenedor secundario */
+    --color-bkg: #e3ffc7;
+    /* fondo general de la página */
+
+    /* Texto */
+    --color-txt: #0d2b0a;
+    /* texto principal (oscuro sobre claro) */
+    --color-sbtxt: #3a6b33;
+    /* texto secundario, placeholders, labels */
+    --color-link: #187f0f;
+    /* links, "¿Olvidaste tu contraseña?" */
+
+    /* Inputs */
+    --color-input-bg: #ffffff;
+    --color-border: #7ebf6b;
+
+    /* Estado / utilidad */
+    --color-check: #187f0f;
+    /* checkbox, toggle activo */
+}
+
+/* ================================
+   MODO OSCURO
+   primary → verde medio (acción)
+   los tonos van oscureciendo hacia el fondo
+   ================================ */
+.dark {
+    /* Acción: botones, navbar, íconos activos */
+    --color-primary: #187f0f;
+
+    /* Superficies */
+    --color-surface: #13660c;
+    /* panel destacado, sidebar */
+    --color-card: #083306;
+    /* card / contenedor secundario */
+    --color-bkg: #031a03;
+    /* fondo general de la página */
+
+    /* Texto */
+    --color-txt: #e3ffc7;
+    /* texto principal (claro sobre oscuro) */
+    --color-sbtxt: #7ebf6b;
+    /* texto secundario, placeholders, labels */
+    --color-link: #4b9f3d;
+    /* links visibles sobre fondo oscuro */
+
+    /* Inputs */
+    --color-input-bg: #0d4d09;
+    --color-border: #13660c;
+
+    /* Estado / utilidad */
+    --color-check: #4b9f3d;
+    /* checkbox, toggle activo */
+}

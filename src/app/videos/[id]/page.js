@@ -24,16 +24,16 @@ export default async function VideoPage({ params }) {
       <video
         src={video.file_path}
         controls
-        className="w-full rounded-lg bg-black"
+        className="w-full rounded-lg bg-primary"
       />
 
       <h1 className="text-2xl font-bold mt-4">{video.title}</h1>
-      <p className="text-sm text-gray-400 mt-1">
+      <p className="text-sm text-txt mt-1">
         Subido por {video.username || "Anónimo"}
       </p>
 
       {video.description && (
-        <p className="mt-3 text-gray-300 whitespace-pre-line">
+        <p className="mt-3 text-bkg whitespace-pre-line">
           {video.description}
         </p>
       )}
