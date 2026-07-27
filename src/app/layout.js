@@ -17,7 +17,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="es">
-      <body className="bg-bkg text-sbtxt min-h-screen>
+      <body className="bg-bkg text-sbtxt min-h-screen">
         <ReduxProvider initialUser={user}>
           <Navbar />
           <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
