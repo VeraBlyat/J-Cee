@@ -8,9 +8,9 @@ API REST del backend Nest.js. Base: **`http://localhost:3001`** (configurable co
 - El cuerpo de las peticiones y respuestas es **JSON**, salvo la subida de video
   (que es `multipart/form-data`).
 - La **sesión** es una cookie `userId` que pone el backend al iniciar sesión. El
-  navegador debe enviar las peticiones con credenciales
-  (`fetch(..., { credentials: "include" })`); el servidor de Next reenvía la
-  cookie con `serverFetch`.
+  navegador debe enviar las peticiones con credenciales: el frontend usa el
+  cliente Axios `src/lib/http.js` (con `withCredentials: true`), y el servidor de
+  Next reenvía la cookie con `serverFetch`.
 - Los **errores** siempre tienen la forma `{ "error": "mensaje" }` con el código
   HTTP correspondiente.
 

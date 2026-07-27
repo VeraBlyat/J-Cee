@@ -1,12 +1,16 @@
+"use client";
+
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/api";
+import { useSelector } from "react-redux";
 import LogoutButton from "@/components/LogoutButton";
 import Image from "next/image";
 import Logo from "../misc/LogoG.png";
 
-// Componente de servidor: puede leer la sesión directamente.
-export default async function Navbar() {
-  const user = await getCurrentUser();
+// Componente de cliente: lee el usuario del store global de Redux (hidratado
+// en el layout con la sesión resuelta en el servidor). Así reacciona al instante
+// cuando alguien inicia o cierra sesión, sin necesidad de recargar.
+export default function Navbar() {
+  const user = useSelector((state) => state.auth.user);
 
   return (
     <nav className="bg-primary">
@@ -42,7 +46,7 @@ export default async function Navbar() {
                 </Link>
               )}
               <span className="text-card">Hola, {user.username}</span>
-              {/* Botón de cliente que llama al backend Nest y refresca. */}
+              {/* Botón de cliente que cierra sesión en el backend y limpia el store. */}
               <LogoutButton />
             </>
           ) : (

@@ -1,17 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { API_URL } from "@/lib/apiBase";
+import { useDispatch } from "react-redux";
+import { logout } from "@/store/authSlice";
 
-// Cierra sesión llamando al backend Nest y refresca para que el navbar cambie.
+// Cierra sesión: dispara el thunk (Axios) que llama al backend Nest y limpia
+// el usuario del store; el navbar reacciona solo. Refrescamos además para
+// re-sincronizar los componentes de servidor.
 export default function LogoutButton() {
   const router = useRouter();
+  const dispatch = useDispatch();
 
   async function handleLogout() {
-    await fetch(`${API_URL}/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
+    await dispatch(logout());
     router.push("/");
     router.refresh();
   }

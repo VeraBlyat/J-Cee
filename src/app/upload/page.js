@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { API_URL } from "@/lib/apiBase";
+import http from "@/lib/http";
 
 export default function UploadPage() {
   const [title, setTitle] = useState("");
@@ -26,21 +26,14 @@ export default function UploadPage() {
     formData.append("file", file);
 
     setLoading(true);
-    const res = await fetch(`${API_URL}/videos`, {
-      method: "POST",
-      credentials: "include",
-      body: formData,
-    });
-    setLoading(false);
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error || "No se pudo subir el video.");
-      return;
+    try {
+      const { data } = await http.post("/videos", formData);
+      router.push(`/videos/${data.id}`); // vamos directo al video recién subido
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo subir el video.");
+    } finally {
+      setLoading(false);
     }
-
-    const data = await res.json();
-    router.push(`/videos/${data.id}`); // vamos directo al video recién subido
   }
 
   return (

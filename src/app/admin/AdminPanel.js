@@ -1,17 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { API_URL } from "@/lib/apiBase";
+import http from "@/lib/http";
 
 function UsersTab() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const res = await fetch(`${API_URL}/admin/users`, {
-      credentials: "include",
-    });
-    setUsers(await res.json());
+    const { data } = await http.get("/admin/users");
+    setUsers(data);
     setLoading(false);
   }, []);
 
@@ -19,23 +17,13 @@ function UsersTab() {
   useEffect(() => { load(); }, [load]);
 
   async function toggleAdmin(user) {
-    await fetch(`${API_URL}/admin/users`, {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: user.id, is_admin: !user.is_admin }),
-    });
+    await http.patch("/admin/users", { id: user.id, is_admin: !user.is_admin });
     load();
   }
 
   async function deleteUser(id) {
     if (!confirm("¿Eliminar este usuario y todo su contenido?")) return;
-    await fetch(`${API_URL}/admin/users`, {
-      method: "DELETE",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
+    await http.delete("/admin/users", { data: { id } });
     load();
   }
 
@@ -99,10 +87,8 @@ function VideosTab() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const res = await fetch(`${API_URL}/admin/videos`, {
-      credentials: "include",
-    });
-    setVideos(await res.json());
+    const { data } = await http.get("/admin/videos");
+    setVideos(data);
     setLoading(false);
   }, []);
 
@@ -111,12 +97,7 @@ function VideosTab() {
 
   async function deleteVideo(id) {
     if (!confirm("¿Eliminar este video permanentemente?")) return;
-    await fetch(`${API_URL}/admin/videos`, {
-      method: "DELETE",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
+    await http.delete("/admin/videos", { data: { id } });
     load();
   }
 
@@ -169,10 +150,8 @@ function CommentsTab() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const res = await fetch(`${API_URL}/admin/comments`, {
-      credentials: "include",
-    });
-    setComments(await res.json());
+    const { data } = await http.get("/admin/comments");
+    setComments(data);
     setLoading(false);
   }, []);
 
@@ -181,12 +160,7 @@ function CommentsTab() {
 
   async function deleteComment(id) {
     if (!confirm("¿Eliminar este comentario?")) return;
-    await fetch(`${API_URL}/admin/comments`, {
-      method: "DELETE",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
+    await http.delete("/admin/comments", { data: { id } });
     load();
   }
 
