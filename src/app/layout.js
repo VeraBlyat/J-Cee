@@ -1,11 +1,13 @@
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import Logo from "../misc/LogoP.png"
 import ReduxProvider from "@/components/ReduxProvider";
 import { getCurrentUser } from "@/lib/api";
 
 export const metadata = {
-  title: "UniStream",
-  description: "Plataforma de streaming universitaria",
+  title: "J-Cee",
+  description: "Plataforma de streaming upaniana",
+  icons: { icon: Logo.src },
 };
 
 export default async function RootLayout({ children }) {
@@ -15,7 +17,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="es">
-      <body className="bg-gray-950 text-gray-100 min-h-screen">
+      <body className="bg-bkg text-sbtxt min-h-screen">
         <ReduxProvider initialUser={user}>
           <Navbar />
           <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
