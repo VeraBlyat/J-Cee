@@ -1,8 +1,9 @@
 # J&Cee
 
 App full-stack hecha con **Next.js (frontend) + Nest.js (backend) + PostgreSQL**.
-Versión MVP y local. Son **dos procesos**: el frontend en el puerto `3000` y el
-backend en el `3001`.
+El frontend usa **Redux Toolkit** para el estado global de la sesión y **Axios**
+para hablar con la API. Versión MVP y local. Son **dos procesos**: el frontend en
+el puerto `3000` y el backend en el `3001`.
 
 ## Documentación
 
@@ -29,10 +30,15 @@ backend en el `3001`.
   guarda los archivos subidos y los sirve en `/uploads`.
 - El **frontend Next.js** (carpeta `src/`) ya no toca la base de datos: pide todo
   al backend por HTTP.
-  - Los *Componentes de Servidor* (inicio, página de video, navbar) usan
+  - Los *Componentes de Servidor* (inicio, página de video, layout) usan
     `serverFetch` de `src/lib/api.js`, que reenvía la cookie de sesión al backend.
-  - Los componentes de cliente (login, subir, comentar, admin) llaman al backend
-    con `fetch(..., { credentials: "include" })`.
+  - Los componentes de cliente (login, subir, comentar, admin, logout) llaman al
+    backend con el cliente **Axios** central `src/lib/http.js` (baseURL fija y
+    `withCredentials: true`, así la cookie siempre viaja).
+  - El **usuario de la sesión vive en un store de Redux Toolkit**
+    (`src/store/`). El layout resuelve la sesión en el servidor e hidrata el
+    store vía `ReduxProvider`; el `Navbar` (ahora componente de cliente) lo lee
+    con `useSelector`, así reacciona al instante al iniciar o cerrar sesión.
 
 ```
 backend/                     -> API Nest.js (TypeScript)
@@ -46,16 +52,22 @@ backend/                     -> API Nest.js (TypeScript)
 
 src/                         -> frontend Next.js
 ├── lib/
-│   ├── api.js               -> serverFetch + getCurrentUser (llaman al backend)
-│   └── apiBase.js           -> URL base del backend (NEXT_PUBLIC_API_URL)
+│   ├── api.js               -> serverFetch + getCurrentUser (para el servidor)
+│   ├── apiBase.js           -> URLs del backend (NEXT_PUBLIC_API_URL / INTERNAL_API_URL)
+│   └── http.js              -> cliente Axios central (para el navegador)
+├── store/                   -> Redux Toolkit
+│   ├── store.js             -> makeStore (un store por request/cliente)
+│   └── authSlice.js         -> usuario global + thunks login/register/logout
 ├── components/
-│   ├── Navbar.js            -> barra superior con la sesión
-│   ├── LogoutButton.js      -> cierra sesión llamando al backend
+│   ├── ReduxProvider.js     -> monta el store e hidrata la sesión inicial
+│   ├── Navbar.js            -> barra superior (cliente, lee la sesión del store)
+│   ├── LogoutButton.js      -> cierra sesión (thunk Axios) y limpia el store
 │   ├── VideoCard.js         -> tarjeta de cada video en la galería
 │   └── CommentForm.js       -> formulario de comentarios
 └── app/
+    ├── layout.js            -> resuelve la sesión e hidrata el ReduxProvider
     ├── page.js              -> inicio: galería de videos
-    ├── login/page.js        -> iniciar sesión / registrarse
+    ├── login/page.js        -> iniciar sesión / registrarse (rediseño)
     ├── upload/page.js       -> subir un video
     ├── videos/[id]/page.js  -> reproductor + comentarios de un video
     └── admin/               -> panel de administración
