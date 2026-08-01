@@ -12,3 +12,12 @@ backend/uploads/*
 !backend/uploads/.gitkeep
 public/uploads/*
 !public/uploads/.gitkeep
+
+# Despliegue en LAN: el contexto de build es la raíz del repo, así que
+# excluimos explícitamente las llaves privadas y los .env de cada máquina
+# para que no terminen dentro de una capa de la imagen.
+deploy/tls/out
+deploy/backend/certs
+deploy/frontend/certs
+deploy/backend/.env
+deploy/frontend/.env

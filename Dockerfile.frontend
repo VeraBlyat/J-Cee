@@ -1,0 +1,48 @@
+# syntax=docker/dockerfile:1
+#
+# Imagen SOLO del frontend (Next.js). Se usa en el despliegue en LAN, donde
+# el frontend vive en una computadora y el backend en otra.
+# (El Dockerfile de la raíz sigue existiendo para el despliegue monolítico
+# en Azure: ahí front y back van juntos en un mismo contenedor.)
+
+# ---- Dependencias -----------------------------------------------------
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# ---- Build (Next standalone) ------------------------------------------
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+# El backend no forma parte de esta imagen.
+RUN rm -rf backend
+
+# NEXT_PUBLIC_* se "hornea" en el bundle del navegador en build time.
+# "/api" (relativo) hace que el navegador le pegue siempre al host del
+# frontend; nginx (o el rewrite de Next) reenvía eso al backend.
+ENV NEXT_PUBLIC_API_URL=/api
+
+# OJO: los rewrites de next.config.mjs también se resuelven en BUILD TIME
+# (quedan escritos en .next/routes-manifest.json), no en runtime. Por eso el
+# origen del backend entra como build arg y no como variable de entorno del
+# contenedor.
+ARG BACKEND_ORIGIN=http://localhost:3001
+ENV BACKEND_ORIGIN=$BACKEND_ORIGIN
+
+RUN npm run build
+
+# ---- Runtime -----------------------------------------------------------
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+EXPOSE 3000
+CMD ["node", "server.js"]

@@ -2,6 +2,15 @@ node_modules
 .next
 .env.local
 coverage
+.DS_Store
 # No subimos los videos al repositorio
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# --- Despliegue en LAN ----------------------------------------------------
+# Llaves privadas y certificados: NUNCA al repositorio.
+deploy/tls/out/
+deploy/*/certs/*
+!deploy/*/certs/.gitkeep
+# Cada máquina tiene su propio .env (contraseñas, IPs).
+deploy/*/.env

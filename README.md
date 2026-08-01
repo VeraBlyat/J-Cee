@@ -11,6 +11,8 @@ el puerto `3000` y el backend en el `3001`.
   el flujo de datos, la autenticación y el modelo de datos.
 - [Referencia de la API](docs/API.md) — todos los endpoints del backend, con
   ejemplos de petición y respuesta.
+- [Despliegue en LAN](docs/DESPLIEGUE-LAN.md) — frontend en una computadora y
+  backend + base de datos en otra, con Docker Compose, DNS propio y HTTPS.
 - [Cómo contribuir](CONTRIBUTING.md) — flujo de ramas, commits y Pull
   Requests.
 
@@ -128,6 +130,28 @@ npm run dev
 ```
 
 Abre `http://localhost:3000`. Regístrate, sube un MP4 y reprodúcelo. ¡Listo!
+
+---
+
+## Despliegue con Docker
+
+Hay dos formas de empaquetar el mismo código:
+
+| Escenario | Archivos | Cómo queda |
+| --------- | -------- | ---------- |
+| **Azure App Service** | `Dockerfile` (raíz) | Un solo contenedor: Next expone el puerto público y reenvía `/api` al Nest interno. Lo construye y despliega `.github/workflows/production.yml`. |
+| **LAN, dos computadoras** | `Dockerfile.frontend`, `Dockerfile.backend`, `deploy/` | PC-FRONT: Next + nginx (TLS). PC-BACK: Nest + PostgreSQL + nginx (TLS) + DNS. |
+
+Para el segundo, la guía completa está en
+[docs/DESPLIEGUE-LAN.md](docs/DESPLIEGUE-LAN.md) y el resumen en
+[deploy/README.md](deploy/README.md):
+
+```bash
+cd deploy/tls     && ./generar-certificados.sh   # CA y certificados de la LAN
+cd deploy/backend && docker compose up -d --build   # en PC-BACK
+cd deploy/frontend && docker compose up -d --build  # en PC-FRONT
+cd deploy && ./verificar.sh
+```
 
 ---
 

@@ -1,0 +1,107 @@
+! =====================================================================
+!  Router3 — configuración ACTUALIZADA para el despliegue de UniStream
+!
+!  Cambios respecto a LAN/Router(3).txt:
+!    1. Se corrige "clock rate 64000s" -> "clock rate 64000" (la 's' es un
+!       typo: el comando falla y el enlace serial queda sin reloj, o sea
+!       caído del lado DCE).
+!    2. Se reserva el rango 192.168.13.1 - 192.168.13.30 para servidores,
+!       para que DHCP no le entregue a un celular la IP de nuestros hosts.
+!    3. El pool DHCP ahora reparte NUESTRO servidor DNS (192.168.13.10)
+!       en vez de 8.8.8.8 directo -> así cualquier equipo de la LAN
+!       resuelve unistream.lan sin tocar su archivo hosts.
+!       Se deja 8.8.8.8 como secundario por si el contenedor DNS se cae.
+!
+!  Pega esto en la consola del Router3.
+! =====================================================================
+
+enable
+configure terminal
+hostname Router3
+
+! --- Enlaces WAN (OSPF hacia el resto de la topología) -------------------
+interface serial0/1/0
+ ip address 10.0.0.6 255.255.255.252
+ clock rate 64000
+ no shutdown
+exit
+
+interface serial0/1/1
+ ip address 10.0.0.21 255.255.255.252
+ clock rate 64000
+ no shutdown
+exit
+
+! --- LAN donde viven las dos computadoras --------------------------------
+interface GigabitEthernet0/0/1
+ ip address 192.168.13.1 255.255.255.0
+ no shutdown
+exit
+
+! --- Enrutamiento dinámico -------------------------------------------------
+router ospf 1
+ network 10.0.0.4 0.0.0.3 area 0
+ network 10.0.0.20 0.0.0.3 area 0
+ network 192.168.13.0 0.0.0.255 area 0
+exit
+
+! --- DHCP para los equipos "cliente" de la LAN ----------------------------
+! Reservamos .1 a .30: ahí van el router y los servidores con IP fija.
+ip dhcp excluded-address 192.168.13.1 192.168.13.30
+
+ip dhcp pool LAN-Router3
+ network 192.168.13.0 255.255.255.0
+ default-router 192.168.13.1
+ ! Primero nuestro DNS interno (PC-BACK), después uno público de respaldo.
+ dns-server 192.168.13.10 8.8.8.8
+ domain-name unistream.lan
+exit
+
+! --- Guardar ---------------------------------------------------------------
+end
+write memory
+
+
+! =====================================================================
+!  Switch3
+! =====================================================================
+!
+!  Se agrega una IP de administración en la VLAN 1 para poder hacerle ping
+!  y telnet/ssh desde las computadoras (sirve para demostrar en la rúbrica
+!  que "existe comunicación entre los equipos de la red").
+
+enable
+configure terminal
+hostname Switch3
+
+interface range fastethernet0/1 - 24
+ no shutdown
+exit
+
+interface vlan 1
+ ip address 192.168.13.2 255.255.255.0
+ no shutdown
+exit
+
+ip default-gateway 192.168.13.1
+
+end
+write memory
+
+
+! =====================================================================
+!  Plan de direccionamiento de la LAN 192.168.13.0/24
+! =====================================================================
+!
+!  192.168.13.1    Router3 (gateway)
+!  192.168.13.2    Switch3 (administración)
+!  192.168.13.10   PC-BACK   -> PostgreSQL + API Nest + DNS   [IP FIJA]
+!  192.168.13.20   PC-FRONT  -> Next.js                        [IP FIJA]
+!  192.168.13.31+  Equipos cliente por DHCP (laptop del profe, celulares...)
+!
+!  Comprobaciones rápidas en el router:
+!    show ip interface brief
+!    show ip route ospf
+!    show ip dhcp binding
+!    ping 192.168.13.10
+!    ping 192.168.13.20

@@ -131,8 +131,11 @@ cookie que pone el backend viaja a ambos. Por eso:
   `credentials: true`) — ver [`backend/src/main.ts`](../backend/src/main.ts).
 - Los componentes de servidor pueden leer la cookie y reenviarla al backend.
 
-En **producción** (dominios distintos con HTTPS) haría falta `SameSite=None;
-Secure`. Está fuera del alcance de este MVP.
+En el **despliegue en LAN** (frontend y backend en computadoras distintas) el
+problema se resuelve por otro camino: nginx del frontend proxea `/api` bajo el
+mismo dominio del sitio, así que el navegador sigue viendo **un solo origen** y
+`SameSite=lax` alcanza, aunque físicamente sean dos máquinas.
+Ver [DESPLIEGUE-LAN.md](./DESPLIEGUE-LAN.md).
 
 ---
 

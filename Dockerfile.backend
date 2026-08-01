@@ -1,0 +1,46 @@
+# syntax=docker/dockerfile:1
+#
+# Imagen SOLO del backend (Nest.js). Se usa en el despliegue en LAN, donde
+# el backend y PostgreSQL viven en una computadora y el frontend en otra.
+
+# ---- Dependencias (todas, para poder compilar TypeScript) --------------
+FROM node:20-alpine AS deps
+WORKDIR /app/backend
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci
+
+# ---- Build (nest build) -------------------------------------------------
+FROM node:20-alpine AS builder
+WORKDIR /app/backend
+COPY --from=deps /app/backend/node_modules ./node_modules
+COPY backend/ .
+RUN npm run build
+
+# ---- Dependencias de producción (imagen final más chica) ---------------
+FROM node:20-alpine AS prod-deps
+WORKDIR /app/backend
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci --omit=dev
+
+# ---- Runtime -------------------------------------------------------------
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3001
+
+COPY --from=builder /app/backend/dist ./backend/dist
+COPY --from=prod-deps /app/backend/node_modules ./backend/node_modules
+COPY backend/package.json ./backend/package.json
+COPY backend/scripts ./backend/scripts
+
+# migrate.js busca el esquema en ../../schema.sql desde backend/scripts.
+COPY schema.sql ./schema.sql
+
+COPY docker/backend-entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+# Los videos subidos se guardan acá (montado como volumen en compose).
+RUN mkdir -p /app/backend/uploads
+
+EXPOSE 3001
+CMD ["./entrypoint.sh"]

@@ -1,0 +1,86 @@
+# nginx del BACKEND — termina TLS y reenvía a la API Nest.
+#
+# La imagen nginx:alpine sustituye las ${VARIABLES} de este archivo con
+# envsubst al arrancar (solo las que existen como variables de entorno del
+# contenedor: ${API_DOMAIN}). Las variables propias de nginx ($host, $scheme,
+# $remote_addr, ...) quedan intactas porque no son variables de entorno.
+
+# --- HTTP: solo healthcheck y redirección a HTTPS -------------------------
+server {
+    listen 80 default_server;
+    server_name ${API_DOMAIN};
+
+    # Lo usa el healthcheck de docker compose (no queremos que el healthcheck
+    # dependa de que el certificado sea válido dentro del contenedor).
+    location /healthz {
+        access_log off;
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# --- HTTPS: la API ---------------------------------------------------------
+server {
+    listen 443 ssl default_server;
+    http2 on;
+    server_name ${API_DOMAIN};
+
+    # Certificado firmado por nuestra CA de LAN (deploy/tls/generar-certificados.sh).
+    ssl_certificate     /etc/nginx/certs/api.crt;
+    ssl_certificate_key /etc/nginx/certs/api.key;
+
+    # Solo TLS moderno.
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    # Los videos pesan: sin esto nginx corta las subidas con 413.
+    client_max_body_size 2048m;
+
+    # Cabeceras de seguridad básicas.
+    # HSTS corto a propósito (ver el mismo comentario en el nginx del
+    # frontend): evita bloquear equipos que aún no tienen instalada la CA.
+    add_header Strict-Transport-Security "max-age=300" always;
+    add_header X-Content-Type-Options "nosniff" always;
+
+    # --- API REST ----------------------------------------------------------
+    location /api/ {
+        proxy_pass http://api:3001;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Las subidas de video se transmiten en streaming al backend en vez de
+        # guardarse enteras en disco de nginx primero.
+        proxy_request_buffering off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    # --- Archivos de video subidos ------------------------------------------
+    location /uploads/ {
+        proxy_pass http://api:3001;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Sin buffering: el <video> del navegador puede empezar a reproducir
+        # antes de que se descargue el archivo completo (Range requests).
+        proxy_buffering off;
+    }
+
+    # Cualquier otra ruta no existe en el backend.
+    location / {
+        return 404;
+    }
+}

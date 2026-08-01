@@ -1,0 +1,46 @@
+enable
+configure terminal
+hostname Router3
+
+interface serial0/1/0
+ ip address 10.0.0.6 255.255.255.252
+ clock rate 64000
+ no shutdown
+exit
+
+interface serial0/1/1
+ ip address 10.0.0.21 255.255.255.252
+ clock rate 64000
+ no shutdown
+exit
+
+interface GigabitEthernet0/0/1
+ ip address 192.168.13.1 255.255.255.0
+ no shutdown
+exit
+
+router ospf 1
+ network 10.0.0.4 0.0.0.3 area 0
+ network 10.0.0.20 0.0.0.3 area 0
+ network 192.168.13.0 0.0.0.255 area 0
+exit
+
+ip dhcp excluded-address 192.168.13.1
+ip dhcp pool LAN-Router3
+ network 192.168.13.0 255.255.255.0
+ default-router 192.168.13.1
+ dns-server 8.8.8.8
+exit
+
+
+==========Switch===========
+
+enable
+configure terminal
+hostname Switch3
+interface range fastethernet0/1 - 24
+ no shutdown
+exit
+exit
+
+In

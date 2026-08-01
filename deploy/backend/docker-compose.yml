@@ -1,0 +1,128 @@
+# =====================================================================
+#  COMPUTADORA 2 — "PC-BACK"  (192.168.13.10)
+#  Capas back-end y base de datos + el servidor DNS de la LAN.
+#
+#  Levantar con:
+#     cd deploy/backend
+#     docker compose up -d --build
+#
+#  El contexto de build es la raíz del repo (../..), porque Dockerfile.backend
+#  necesita backend/ y también schema.sql, que vive en la raíz.
+# =====================================================================
+
+name: unistream-backend
+
+services:
+  # ------------------------------------------------------------------
+  #  CAPA 3: Base de datos
+  #  NO publica puertos al host: solo es alcanzable desde la red interna
+  #  de Docker. El único que la toca es el backend (regla de la
+  #  arquitectura de 3 capas).
+  # ------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: unistream-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-unistream}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en el archivo .env}
+      POSTGRES_DB: ${POSTGRES_DB:-unistream}
+    volumes:
+      # Los datos sobreviven a `docker compose down` y a reinicios de la PC.
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-unistream} -d ${POSTGRES_DB:-unistream}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend-net
+
+  # ------------------------------------------------------------------
+  #  CAPA 2: API Nest.js
+  #  Tampoco publica puertos: quien la expone a la red es nginx, con TLS.
+  # ------------------------------------------------------------------
+  api:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.backend
+    image: unistream-api:lan
+    container_name: unistream-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # "db" es el nombre del servicio: el DNS interno de Docker lo resuelve
+      # a la IP del contenedor de PostgreSQL.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-unistream}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-unistream}
+      DATABASE_SSL: "false"
+      PORT: "3001"
+      # Origen(es) permitidos por CORS. Es el host del FRONTEND (la otra PC).
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-https://unistream.lan}
+    volumes:
+      # Los videos subidos viven fuera del contenedor: si reconstruyes la
+      # imagen no se pierden.
+      - uploads:/app/backend/uploads
+    networks:
+      - backend-net
+
+  # ------------------------------------------------------------------
+  #  Puerta de entrada del backend: nginx con TLS.
+  #  Publica 443 en la LAN -> https://api.unistream.lan
+  # ------------------------------------------------------------------
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: unistream-api-proxy
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "443:443"
+      - "80:80"
+    environment:
+      API_DOMAIN: ${API_DOMAIN:-api.unistream.lan}
+    volumes:
+      # nginx:alpine corre envsubst sobre /etc/nginx/templates/*.template al
+      # arrancar y escribe el resultado en /etc/nginx/conf.d/.
+      - ./nginx/api.conf.template:/etc/nginx/templates/api.conf.template:ro
+      - ./certs:/etc/nginx/certs:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - backend-net
+
+  # ------------------------------------------------------------------
+  #  DNS de la LAN (dnsmasq).
+  #  Resuelve unistream.lan y api.unistream.lan, y reenvía todo lo demás
+  #  a internet. El router reparte esta IP por DHCP como servidor DNS.
+  # ------------------------------------------------------------------
+  dns:
+    # Imagen propia de 3 líneas sobre Alpine: no dependemos de una imagen de
+    # dnsmasq de terceros en Docker Hub.
+    build: ./dnsmasq
+    image: unistream-dns:lan
+    container_name: unistream-dns
+    restart: unless-stopped
+    # Publicamos el 53 en UDP y TCP (las respuestas grandes usan TCP).
+    # Se publica el puerto en vez de usar network_mode:host porque en Docker
+    # Desktop (Windows/macOS) el modo host no expone nada a la LAN real.
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    volumes:
+      - ./dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf:ro
+    networks:
+      - backend-net
+
+volumes:
+  db-data:
+  uploads:
+
+networks:
+  backend-net:
+    driver: bridge

@@ -1,0 +1,112 @@
+# nginx del FRONTEND — termina TLS y reparte el tráfico:
+#
+#   /            -> contenedor Next.js  (mismo host, red de Docker)
+#   /api/        -> API Nest de la OTRA computadora, por HTTPS
+#   /uploads/    -> videos servidos por la OTRA computadora, por HTTPS
+#
+# Que /api viva bajo el mismo dominio que el sitio es a propósito: el
+# navegador ve un solo origen (https://unistream.lan), así la cookie de
+# sesión "userId" viaja sin necesidad de SameSite=None y no hay preflight
+# de CORS. La separación real front/back sigue existiendo: son dos
+# computadoras distintas hablando por la LAN.
+
+# --- HTTP: healthcheck + redirección a HTTPS ------------------------------
+server {
+    listen 80 default_server;
+    server_name ${WEB_DOMAIN};
+
+    location /healthz {
+        access_log off;
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# --- HTTPS: el sitio -------------------------------------------------------
+server {
+    listen 443 ssl default_server;
+    http2 on;
+    server_name ${WEB_DOMAIN};
+
+    ssl_certificate     /etc/nginx/certs/web.crt;
+    ssl_certificate_key /etc/nginx/certs/web.key;
+
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    client_max_body_size 2048m;
+
+    # HSTS corto (5 min) A PROPÓSITO: con max-age de un año, cualquier equipo
+    # que NO tenga instalada nuestra CA se queda sin la opción de "continuar
+    # de todos modos" en el navegador. En una LAN de clase eso te deja fuera
+    # en plena demostración. En internet con un certificado público, subilo.
+    add_header Strict-Transport-Security "max-age=300" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+
+    # ---------------------------------------------------------------
+    #  Tráfico hacia la OTRA COMPUTADORA (backend), por HTTPS.
+    #  proxy_ssl_verify on + la CA de la LAN = el frontend comprueba de
+    #  verdad la identidad del backend, no acepta cualquier certificado.
+    # ---------------------------------------------------------------
+    location /api/ {
+        proxy_pass https://${API_DOMAIN};
+        proxy_http_version 1.1;
+
+        proxy_ssl_verify              on;
+        proxy_ssl_verify_depth        2;
+        proxy_ssl_trusted_certificate /etc/nginx/certs/ca.crt;
+        proxy_ssl_server_name         on;
+        proxy_ssl_name                ${API_DOMAIN};
+
+        # Host original: el backend responde Set-Cookie sin atributo Domain,
+        # así que la cookie queda ligada a ${WEB_DOMAIN} en el navegador.
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_request_buffering off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    location /uploads/ {
+        proxy_pass https://${API_DOMAIN};
+        proxy_http_version 1.1;
+
+        proxy_ssl_verify              on;
+        proxy_ssl_verify_depth        2;
+        proxy_ssl_trusted_certificate /etc/nginx/certs/ca.crt;
+        proxy_ssl_server_name         on;
+        proxy_ssl_name                ${API_DOMAIN};
+
+        proxy_set_header Host            $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        # Streaming de video: sin buffering para que el reproductor arranque
+        # de inmediato y funcionen las peticiones por rangos.
+        proxy_buffering off;
+    }
+
+    # ---------------------------------------------------------------
+    #  Todo lo demás: la app Next.js de esta misma computadora.
+    # ---------------------------------------------------------------
+    location / {
+        proxy_pass http://web:3000;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        "upgrade";
+    }
+}

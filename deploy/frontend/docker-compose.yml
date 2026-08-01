@@ -1,0 +1,82 @@
+# =====================================================================
+#  COMPUTADORA 1 — "PC-FRONT"  (192.168.13.20)
+#  Capa de presentación: Next.js detrás de nginx con TLS.
+#
+#  Levantar con:
+#     cd deploy/frontend
+#     docker compose up -d --build
+#
+#  Esta máquina NO tiene base de datos ni toca PostgreSQL: todo lo pide por
+#  HTTPS a la API que corre en la otra computadora.
+# =====================================================================
+
+name: unistream-frontend
+
+services:
+  # ------------------------------------------------------------------
+  #  CAPA 1: Next.js (servidor de la app + componentes de servidor)
+  # ------------------------------------------------------------------
+  web:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.frontend
+      args:
+        # BUILD ARG, no variable de runtime: los rewrites de Next se
+        # resuelven durante `next build`. Si cambias el dominio del backend
+        # hay que reconstruir la imagen (`docker compose up -d --build`).
+        BACKEND_ORIGIN: https://${API_DOMAIN:-api.unistream.lan}
+    image: unistream-web:lan
+    container_name: unistream-web
+    restart: unless-stopped
+    environment:
+      # URL que usan los COMPONENTES DE SERVIDOR de Next (serverFetch) para
+      # hablar con la API. Esto sí se lee en runtime.
+      INTERNAL_API_URL: https://${API_DOMAIN:-api.unistream.lan}/api
+      # Node no conoce nuestra CA de LAN: sin esto, el fetch del servidor
+      # falla con "unable to verify the first certificate".
+      NODE_EXTRA_CA_CERTS: /etc/ssl/lan/ca.crt
+    volumes:
+      - ./certs/ca.crt:/etc/ssl/lan/ca.crt:ro
+    # El contenedor no usa el DNS de la LAN, así que le enseñamos a mano
+    # dónde vive la API. Así el frontend sigue funcionando aunque el DNS
+    # se caiga (y hace el arranque independiente del orden de encendido).
+    extra_hosts:
+      - "${API_DOMAIN:-api.unistream.lan}:${BACKEND_IP:-192.168.13.10}"
+    networks:
+      - frontend-net
+
+  # ------------------------------------------------------------------
+  #  Puerta de entrada del sitio: nginx con TLS.
+  #  Publica 443 en la LAN -> https://unistream.lan
+  #  Además proxea /api y /uploads directo al backend de la otra máquina,
+  #  para que el navegador vea UN SOLO origen (adiós problemas de CORS y de
+  #  cookies entre dominios).
+  # ------------------------------------------------------------------
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: unistream-web-proxy
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "443:443"
+      - "80:80"
+    environment:
+      WEB_DOMAIN: ${WEB_DOMAIN:-unistream.lan}
+      API_DOMAIN: ${API_DOMAIN:-api.unistream.lan}
+    volumes:
+      - ./nginx/web.conf.template:/etc/nginx/templates/web.conf.template:ro
+      - ./certs:/etc/nginx/certs:ro
+    extra_hosts:
+      - "${API_DOMAIN:-api.unistream.lan}:${BACKEND_IP:-192.168.13.10}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - frontend-net
+
+networks:
+  frontend-net:
+    driver: bridge
