@@ -29,34 +29,57 @@ API REST del backend Nest.js. Base: **`http://localhost:3001`** (configurable co
 
 ## Autenticación — `/auth`
 
+> **La credencial es el `email`.** El `username` es el nombre público del canal
+> (el que se ve en videos y comentarios) y sólo se envía al registrarse.
+> Las contraseñas se guardan hasheadas con **bcrypt** (costo 10); la base nunca
+> ve la contraseña real.
+
 ### `POST /auth/login`
 Inicia sesión. Pone la cookie `userId`.
 
 **Body**
 ```json
-{ "username": "ana", "password": "1234" }
+{ "email": "ana@mail.com", "password": "contraseña123" }
 ```
 **200**
 ```json
-{ "id": 1, "username": "ana" }
+{ "id": 1, "username": "ana", "email": "ana@mail.com" }
 ```
-**401** — `{ "error": "Usuario o contraseña incorrectos." }`
+**401** — `{ "error": "Email o contraseña incorrectos." }`
+
+El mismo 401 se devuelve tanto si el email no existe como si la contraseña es
+incorrecta, y ambos casos tardan lo mismo: es a propósito, para que nadie pueda
+averiguar qué emails están registrados.
 
 ---
 
 ### `POST /auth/register`
 Crea una cuenta e inicia sesión (pone la cookie `userId`).
 
+El email se normaliza (se pasa a minúsculas y se le quitan los espacios) antes
+de guardarlo, así que `Ana@Mail.com` y `ana@mail.com` son la misma cuenta.
+
 **Body**
 ```json
-{ "username": "ana", "password": "1234" }
+{ "email": "ana@mail.com", "username": "ana", "password": "contraseña123" }
 ```
-**200**
+**201**
 ```json
-{ "id": 1, "username": "ana" }
+{ "id": 1, "username": "ana", "email": "ana@mail.com" }
 ```
-**400** — `{ "error": "Usuario y contraseña son obligatorios." }`
-**409** — `{ "error": "Ese usuario ya existe." }`
+
+**Reglas de validación**
+
+| Campo      | Regla                                                        |
+| ---------- | ------------------------------------------------------------ |
+| `email`    | Formato válido, único                                         |
+| `username` | Entre 3 y 50 caracteres, único                                |
+| `password` | Entre 8 y 72 caracteres (72 es el límite de bcrypt)           |
+
+**400** — `{ "error": "Email, nombre de usuario y contraseña son obligatorios." }`
+o el mensaje de la regla que se haya incumplido.
+**409** — `{ "error": "Ese email ya está registrado." }`
+o `{ "error": "Ese nombre de usuario ya está en uso." }`
 
 ---
 
@@ -72,7 +95,7 @@ Devuelve el usuario de la sesión actual, o `null` si no hay sesión.
 
 **200**
 ```json
-{ "id": 1, "username": "ana", "is_admin": false }
+{ "id": 1, "username": "ana", "email": "ana@mail.com", "is_admin": false }
 ```
 o `null`.
 
@@ -83,10 +106,23 @@ o `null`.
 ### `GET /videos`
 Lista todos los videos, del más nuevo al más viejo. Público.
 
+**Query params**
+
+| Parámetro | Descripción                                                     |
+| --------- | --------------------------------------------------------------- |
+| `hashtag` | Filtra por tema. Se normaliza igual que al subir, así que `nextjs`, `NextJS` y `%23NextJS` son equivalentes. |
+
 **200**
 ```json
 [
-  { "id": 2, "title": "Mi clip", "file_path": "/uploads/123-clip.mp4", "username": "ana" }
+  {
+    "id": 2,
+    "title": "Mi clip",
+    "file_path": "/uploads/123-clip.mp4",
+    "thumbnail_path": "/uploads/123-clip.mp4.thumb.jpg",
+    "duration_seconds": 212.5,
+    "username": "ana"
+  }
 ]
 ```
 
@@ -102,12 +138,17 @@ Detalle de un video. Público.
   "title": "Mi clip",
   "description": "una descripción",
   "file_path": "/uploads/123-clip.mp4",
-  "username": "ana"
+  "thumbnail_path": "/uploads/123-clip.mp4.thumb.jpg",
+  "duration_seconds": 212.5,
+  "width": 1920,
+  "height": 1080,
+  "username": "ana",
+  "hashtags": ["nestjs", "nextjs"]
 }
 ```
 **404** — `{ "error": "Video no encontrado." }`
 
-> El archivo se reproduce desde `http://localhost:3001` + `file_path`.
+> `file_path` sigue siendo el MP4 original. Para reproducir, usá HLS (abajo).
 
 ---
 
@@ -116,18 +157,131 @@ Sube un video. Es `multipart/form-data`.
 
 **Campos del formulario**
 
-| Campo         | Tipo   | Obligatorio | Descripción              |
-| ------------- | ------ | ----------- | ------------------------ |
-| `title`       | texto  | sí          | Título del video         |
-| `description` | texto  | no          | Descripción              |
-| `file`        | archivo| sí          | El archivo de video (MP4)|
+| Campo         | Tipo   | Obligatorio | Descripción                          |
+| ------------- | ------ | ----------- | ------------------------------------ |
+| `title`       | texto  | sí          | Título del video                     |
+| `description` | texto  | no          | Descripción                          |
+| `hashtags`    | texto  | no          | Separados por espacios o comas       |
+| `file`        | archivo| sí          | El archivo de video (MP4)            |
+| `thumbnail`   | archivo| no          | Miniatura; si falta se genera sola   |
 
-**200** — `{ "id": 2 }`
+**201** — `{ "id": 2 }`
 **400** — `{ "error": "Faltan datos o el archivo." }`
+o `{ "error": "El archivo no es un video válido o está dañado." }`
 **401** — `{ "error": "Debes iniciar sesión." }`
+**413** — el archivo supera los 500 MB.
 
 El archivo se guarda en `backend/uploads/` con un nombre único
-(`<timestamp>-<nombre>`) y se sirve en `/uploads/<nombre>`.
+(`<timestamp>-<nombre>`). Al subirlo se corre `ffprobe`, que cumple dos
+funciones: guarda duración y resolución (necesarias para armar las playlists),
+y valida que el contenido sea realmente un video — la extensión y el mimetype
+los manda el cliente y se pueden falsear.
+
+**Hashtags.** Se normalizan a minúsculas y sin `#`, se deduplican y se cortan
+en 10. Se conservan acentos, ñ, guiones y guiones bajos; el resto de la
+puntuación se descarta. `"#NextJS, nestjs #NEXTJS"` queda en
+`["nextjs", "nestjs"]`.
+
+**Miniatura.** Nunca se publica el archivo del usuario tal cual: se reencodea a
+JPEG de 640 px de ancho. Además de normalizar tamaño y descartar metadatos
+(EXIF con geolocalización, por ejemplo), es la única validación confiable —
+`ffprobe` deduce el formato por la extensión y a un archivo de texto llamado
+`foto.png` le responde `codec_name=png` con código de salida 0. Sólo al
+decodificarlo se cae. Si la imagen no se puede decodificar, se cae a un
+fotograma del video (al 10 % de la duración, con tope de 10 s) en vez de
+rechazar la subida.
+
+---
+
+## Streaming HLS — `/videos/:id/hls`
+
+Los segmentos se generan **bajo demanda**: no se transcodifica nada al subir.
+Las playlists se calculan con aritmética sobre la duración y listan segmentos
+que todavía no existen; FFmpeg corre recién cuando el player pide uno.
+
+Formato **fMP4 (CMAF)**, no MPEG-TS: empalmar segmentos encodeados por separado
+en TS deja discontinuidades de timestamp en cada corte (medido: 17 warnings de
+DTS y paquetes corruptos en un video de 20 s), y con fMP4 el mismo video da
+cero. El costo es un segmento de init aparte por calidad.
+
+> **Post-proceso de los segmentos.** Lo que escribe FFmpeg no sirve tal cual y
+> se corrige en `fmp4.ts` antes de guardarlo en caché:
+>
+> 1. **Separar init de media.** FFmpeg escribe un MP4 completo; el segmento se
+>    queda sólo con `moof`+`mdat`. Si conservara su propio `moov`, el player
+>    reinicializaría el decoder en cada cachito.
+> 2. **Reescribir el `tfdt`.** Cada segmento se encodea por separado, así que
+>    sale declarando que empieza en el segundo 0 — y ni `-output_ts_offset` ni
+>    `-copyts` se lo llevan al muxer MP4. Con todos en 0, MSE los apila en el
+>    mismo punto de la línea de tiempo y sólo se ve el primero. Se reescribe
+>    con la posición global, convertida al timescale de cada pista (video y
+>    audio usan escalas distintas, típicamente 15360 y 48000).
+>
+> Ojo también con `-force_key_frames`: la expresión tiene que ser `eq(n,0)`
+> (sólo el primer frame). Con `gte(t,0)` es verdadera para *todos* los frames y
+> FFmpeg encodea en all-intra — medido, 7,4× más pesado.
+
+**Calidades:** 360p y 720p, nunca escalando hacia arriba. Una fuente 480p sólo
+ofrece 360p; una fuente menor a 360p se sirve en su resolución nativa.
+
+### `GET /videos/:id/hls/master.m3u8`
+Playlist maestra: las calidades disponibles, para que el player elija sola
+según el ancho de banda. Público.
+
+**404** — si el video no existe, o si se subió antes de la Fase 2 y no tiene
+metadata de streaming.
+
+---
+
+### `GET /videos/:id/hls/:quality/index.m3u8`
+Playlist de una calidad: la lista de segmentos. Público.
+
+```
+#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:6
+#EXT-X-PLAYLIST-TYPE:VOD
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:6.000,
+0.m4s
+...
+#EXT-X-ENDLIST
+```
+
+**404** — `{ "error": "Esa calidad no existe para este video." }`
+
+---
+
+### `GET /videos/:id/hls/:quality/init.mp4`
+Segmento de init (`EXT-X-MAP`): sólo las cabeceras de códec (`ftyp` + `moov`),
+~1,3 KB. El player lo pide una vez por calidad y lo antepone a cada segmento.
+
+---
+
+### `GET /videos/:id/hls/:quality/:index.m4s`
+El segmento en sí. **Acá es donde corre FFmpeg**, si no está en caché.
+
+**404** — si el índice queda fuera del rango real de segmentos.
+
+Se sirve con `Cache-Control: immutable`: el mismo video, calidad e índice dan
+siempre el mismo resultado, así que el navegador puede guardarlo para siempre
+y rebobinar no re-transcodifica.
+
+**Control de carga** — es lo que hace viable el enfoque JIT:
+
+| Mecanismo         | Qué hace                                                        |
+| ----------------- | --------------------------------------------------------------- |
+| Deduplicación     | N pedidos del mismo segmento sin cachear ⇒ **un solo** FFmpeg    |
+| Semáforo          | Nunca más de `HLS_MAX_CONCURRENT` FFmpeg a la vez (default 2)    |
+| Caché en disco    | En `backend/hls-cache/`, podada por LRU al pasar `HLS_CACHE_MAX_BYTES` (default 2 GB) |
+| Escritura atómica | Se escribe a `.tmp` y se renombra, así nadie lee un archivo a medio escribir |
+
+**Variables de entorno**
+
+| Variable                | Default | Para qué                                   |
+| ----------------------- | ------- | ------------------------------------------ |
+| `HLS_MAX_CONCURRENT`    | `2`     | Tope de FFmpeg simultáneos                 |
+| `HLS_CACHE_MAX_BYTES`   | `2 GB`  | Tamaño máximo de la caché de segmentos     |
 
 ---
 
@@ -250,4 +404,8 @@ Ejemplo: `http://localhost:3001/uploads/1783990121754-clip.mp4`.
 | `DELETE` | `/admin/videos`           | 🔒 admin | Eliminar video               |
 | `GET`    | `/admin/comments`         | 🔒 admin | Listar comentarios           |
 | `DELETE` | `/admin/comments`         | 🔒 admin | Eliminar comentario          |
+| `GET`    | `/videos/:id/hls/master.m3u8`            | —      | Playlist maestra (calidades) |
+| `GET`    | `/videos/:id/hls/:quality/index.m3u8`    | —      | Playlist de segmentos        |
+| `GET`    | `/videos/:id/hls/:quality/init.mp4`      | —      | Cabeceras de códec (fMP4)    |
+| `GET`    | `/videos/:id/hls/:quality/:index.m4s`    | —      | Segmento (corre FFmpeg)      |
 | `GET`    | `/uploads/:archivo`       | —      | Servir archivo de video        |

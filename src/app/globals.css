@@ -1,69 +1,147 @@
 @import "tailwindcss";
 
-/* ================================
-   MODO CLARO
-   primary → oscuro (acción)
-   los tonos van aclarando hacia el fondo
-   ================================ */
-@theme {
-    /* Acción: botones, navbar, íconos activos */
-    --color-primary: #187f0f;
+/* =====================================================
+   J-Cee — Tokens de diseño
+   Portados de referenciaFront/Create that/src/index.css.
 
-    /* Superficies */
-    --color-surface: #4b9f3d;
-    /* panel destacado, sidebar */
-    --color-card: #b0df99;
-    /* card / contenedor secundario */
-    --color-bkg: #e3ffc7;
-    /* fondo general de la página */
+   Los valores viven en variables CSS propias (--jc-*) que cambian según
+   [data-theme], y @theme inline las expone como utilidades de Tailwind. Esa
+   indirección es lo que permite cambiar de tema en caliente: si pusiéramos
+   los colores literales en @theme, Tailwind los hornearía en el build y el
+   toggle no podría hacer nada.
+   ===================================================== */
 
-    /* Texto */
-    --color-txt: #0d2b0a;
-    /* texto principal (oscuro sobre claro) */
-    --color-sbtxt: #3a6b33;
-    /* texto secundario, placeholders, labels */
-    --color-link: #187f0f;
-    /* links, "¿Olvidaste tu contraseña?" */
+:root,
+[data-theme="light"] {
+    --jc-page: #ebf7e3;
+    --jc-page-2: #d8f0c8;
+    --jc-surface: #f5fff0;
+    --jc-card: #ffffff;
+    --jc-header: #1e5a17;
+    --jc-header-text: #e8fbdf;
 
-    /* Inputs */
-    --color-input-bg: #ffffff;
-    --color-border: #7ebf6b;
+    --jc-brand: #187f0f;
+    --jc-brand-2: #4b9f3d;
+    --jc-brand-3: #7ebf6b;
+    --jc-brand-4: #b0df99;
 
-    /* Estado / utilidad */
-    --color-check: #187f0f;
-    /* checkbox, toggle activo */
+    --jc-border: #a8d895;
+    --jc-border-strong: #4b9f3d;
+
+    --jc-text: #0c1e08;
+    --jc-text-2: #2a4e24;
+    --jc-muted: #4a6b43;
+
+    --jc-shadow: 0 4px 20px rgba(24, 127, 15, 0.12), 0 1px 4px rgba(24, 127, 15, 0.08);
+    --jc-shadow-lg: 0 12px 40px rgba(24, 127, 15, 0.2), 0 4px 12px rgba(24, 127, 15, 0.1);
+    --jc-scale-line: rgba(24, 127, 15, 0.09);
+    --jc-glow: rgba(59, 179, 40, 0.25);
 }
 
-/* ================================
-   MODO OSCURO
-   primary → verde medio (acción)
-   los tonos van oscureciendo hacia el fondo
-   ================================ */
-.dark {
-    /* Acción: botones, navbar, íconos activos */
-    --color-primary: #187f0f;
+[data-theme="dark"] {
+    --jc-page: #080f06;
+    --jc-page-2: #0c1a08;
+    --jc-surface: #0f1e0a;
+    --jc-card: #132410;
+    --jc-header: #080f06;
+    --jc-header-text: #c8f0b8;
 
-    /* Superficies */
-    --color-surface: #13660c;
-    /* panel destacado, sidebar */
-    --color-card: #083306;
-    /* card / contenedor secundario */
-    --color-bkg: #031a03;
-    /* fondo general de la página */
+    --jc-brand: #3bb328;
+    --jc-brand-2: #13650c;
+    --jc-brand-3: #1e8014;
+    --jc-brand-4: #0f4a0a;
 
-    /* Texto */
-    --color-txt: #e3ffc7;
-    /* texto principal (claro sobre oscuro) */
-    --color-sbtxt: #7ebf6b;
-    /* texto secundario, placeholders, labels */
-    --color-link: #4b9f3d;
-    /* links visibles sobre fondo oscuro */
+    --jc-border: #1a3614;
+    --jc-border-strong: #2e6624;
 
-    /* Inputs */
-    --color-input-bg: #0d4d09;
-    --color-border: #13660c;
+    --jc-text: #d8f5c8;
+    --jc-text-2: #9dd48c;
+    --jc-muted: #5e8a55;
 
-    /* Estado / utilidad */
-    --color-check: #4b9f3d;
-    /* checkbox, toggle activo */
+    --jc-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 1px 4px rgba(0, 0, 0, 0.3);
+    --jc-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.4);
+    --jc-scale-line: rgba(59, 179, 40, 0.08);
+    --jc-glow: rgba(59, 179, 40, 0.3);
+}
+
+@theme inline {
+    /* Superficies, de la más al fondo a la más al frente */
+    --color-page: var(--jc-page);
+    --color-page-2: var(--jc-page-2);
+    --color-surface: var(--jc-surface);
+    --color-card: var(--jc-card);
+    --color-header: var(--jc-header);
+    --color-header-text: var(--jc-header-text);
+
+    /* Marca: brand es la acción principal, el resto son tonos de apoyo */
+    --color-brand: var(--jc-brand);
+    --color-brand-2: var(--jc-brand-2);
+    --color-brand-3: var(--jc-brand-3);
+    --color-brand-4: var(--jc-brand-4);
+
+    --color-border: var(--jc-border);
+    --color-border-strong: var(--jc-border-strong);
+
+    --color-text: var(--jc-text);
+    --color-text-2: var(--jc-text-2);
+    --color-muted: var(--jc-muted);
+
+    /* Los nombres de fuente los inyecta next/font desde el layout. */
+    --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    --font-display: var(--font-baloo), ui-sans-serif, sans-serif;
+    --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+    /* Nombres semánticos y NO s/m/l a propósito: Tailwind ya define
+       rounded-field (start) y rounded-panel (left), así que --radius-s y --radius-l
+       chocarían con esas utilidades y no se generaría ninguna clase. */
+    --radius-field: 8px;
+    --radius-card: 14px;
+    --radius-panel: 22px;
+    --radius-hero: 32px;
+
+    --shadow-jc: var(--jc-shadow);
+    --shadow-jc-lg: var(--jc-shadow-lg);
+}
+
+body {
+    background: var(--jc-page);
+    color: var(--jc-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Textura de escamas del logo, para fondos de pantallas vacías. */
+.scales {
+    background-image:
+        radial-gradient(ellipse at 10px 14px, var(--jc-scale-line) 0 7px, transparent 8px),
+        radial-gradient(ellipse at 30px 24px, var(--jc-scale-line) 0 7px, transparent 8px);
+    background-size: 40px 40px;
+}
+
+/* Barras de scroll finas y en el color de la marca. */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--jc-border-strong);
+    border-radius: 999px;
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--jc-border-strong) transparent;
+}
+
+/* Anillo de foco de la marca, para inputs y botones. */
+.focus-glow:focus-visible,
+.focus-glow:focus {
+    border-color: var(--jc-brand);
+    box-shadow: 0 0 0 3px var(--jc-glow);
+    outline: none;
 }

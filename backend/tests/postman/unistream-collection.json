@@ -11,7 +11,15 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": { "raw": "{{baseUrl}}/videos", "host": ["{{baseUrl}}"], "path": ["videos"] }
+        "url": {
+          "raw": "{{baseUrl}}/videos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos"
+          ]
+        }
       },
       "event": [
         {
@@ -34,7 +42,10 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.collectionVariables.set('testUsername', 'qa_' + Date.now());"
+              "pm.collectionVariables.set('testUsername', 'qa_' + Date.now());",
+              "pm.collectionVariables.set('testEmail', pm.collectionVariables.get('testUsername') + '@qa.jcee.test');",
+              "pm.collectionVariables.set('testUsername2', pm.collectionVariables.get('testUsername') + '_b');",
+              "pm.collectionVariables.set('testEmail2', pm.collectionVariables.get('testUsername') + '_b@qa.jcee.test');"
             ]
           }
         },
@@ -56,12 +67,26 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\"username\": \"{{testUsername}}\", \"password\": \"qa_test_pass\"}"
+          "raw": "{\"email\": \"{{testEmail}}\", \"username\": \"{{testUsername}}\", \"password\": \"qa_test_pass\"}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        }
       }
     },
     {
@@ -80,12 +105,26 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\"username\": \"{{testUsername}}\", \"password\": \"qa_test_pass\"}"
+          "raw": "{\"email\": \"{{testEmail}}\", \"username\": \"{{testUsername}}\", \"password\": \"qa_test_pass\"}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        }
       }
     },
     {
@@ -109,7 +148,16 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "me"
+          ]
+        }
       }
     },
     {
@@ -129,7 +177,16 @@
       "request": {
         "method": "POST",
         "header": [],
-        "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/logout",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "logout"
+          ]
+        }
       }
     },
     {
@@ -149,7 +206,16 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "me"
+          ]
+        }
       }
     },
     {
@@ -167,12 +233,26 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\"username\": \"{{testUsername}}\", \"password\": \"incorrecta\"}"
+          "raw": "{\"email\": \"{{testEmail}}\", \"password\": \"incorrecta\"}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
       }
     },
     {
@@ -191,12 +271,26 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\"username\": \"{{testUsername}}\", \"password\": \"qa_test_pass\"}"
+          "raw": "{\"email\": \"{{testEmail}}\", \"password\": \"qa_test_pass\"}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
       }
     },
     {
@@ -214,12 +308,25 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\"videoId\": 1}"
         },
-        "url": { "raw": "{{baseUrl}}/comments", "host": ["{{baseUrl}}"], "path": ["comments"] }
+        "url": {
+          "raw": "{{baseUrl}}/comments",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "comments"
+          ]
+        }
       }
     },
     {
@@ -238,7 +345,16 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": { "raw": "{{baseUrl}}/videos/999999", "host": ["{{baseUrl}}"], "path": ["videos", "999999"] }
+        "url": {
+          "raw": "{{baseUrl}}/videos/999999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos",
+            "999999"
+          ]
+        }
       }
     },
     {
@@ -257,7 +373,1151 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": { "raw": "{{baseUrl}}/admin/users", "host": ["{{baseUrl}}"], "path": ["admin", "users"] }
+        "url": {
+          "raw": "{{baseUrl}}/admin/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "users"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Videos - Subir video de prueba",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 201', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.test('devuelve el id del video', () => pm.expect(body.id).to.be.a('number'));",
+              "pm.collectionVariables.set('testVideoId', body.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos"
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "title",
+              "value": "Video de QA {{testUsername}}",
+              "type": "text"
+            },
+            {
+              "key": "description",
+              "value": "Subido por la suite de integración",
+              "type": "text"
+            },
+            {
+              "key": "hashtags",
+              "value": "#qa #Automatizado, qa",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": "tests/postman/fixtures/sample.mp4"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Videos - Detalle trae metadata y hashtags normalizados",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const v = pm.response.json();",
+              "pm.test('ffprobe guardó duración y resolución', () => {",
+              "  pm.expect(v.duration_seconds).to.be.above(0);",
+              "  pm.expect(v.width).to.eql(320);",
+              "  pm.expect(v.height).to.eql(240);",
+              "});",
+              "pm.test('se generó la miniatura', () => pm.expect(v.thumbnail_path).to.be.a('string'));",
+              "pm.test('hashtags en minúscula y sin duplicados', () => {",
+              "  pm.expect(v.hashtags).to.eql(['automatizado', 'qa']);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos/{{testVideoId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos",
+            "{{testVideoId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Videos - Subir archivo que no es video (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 400', () => pm.response.to.have.status(400));",
+              "pm.test('explica que el archivo no sirve', () => pm.expect(pm.response.json().error).to.include('video'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos"
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "title",
+              "value": "No es un video",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": "tests/postman/qa.postman_environment.json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "HLS - Master playlist lista las calidades",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const txt = pm.response.text();",
+              "pm.test('es una playlist HLS', () => pm.expect(txt).to.include('#EXTM3U'));",
+              "// La fuente es 240p, así que sólo debe ofrecer 240p (nunca escalar hacia arriba).",
+              "pm.test('no escala hacia arriba', () => {",
+              "  pm.expect(txt).to.not.include('720p/index.m3u8');",
+              "  pm.expect(txt).to.include('index.m3u8');",
+              "});",
+              "const calidad = /([0-9]+p)\\/index\\.m3u8/.exec(txt)[1];",
+              "pm.collectionVariables.set('testQuality', calidad);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos/{{testVideoId}}/hls/master.m3u8",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos",
+            "{{testVideoId}}",
+            "hls",
+            "master.m3u8"
+          ]
+        }
+      }
+    },
+    {
+      "name": "HLS - Media playlist declara fMP4 y VOD",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const txt = pm.response.text();",
+              "pm.test('es VOD y cierra con ENDLIST', () => {",
+              "  pm.expect(txt).to.include('#EXT-X-PLAYLIST-TYPE:VOD');",
+              "  pm.expect(txt).to.include('#EXT-X-ENDLIST');",
+              "});",
+              "pm.test('declara el segmento de init (fMP4)', () => {",
+              "  pm.expect(txt).to.include('#EXT-X-MAP:URI=\"init.mp4\"');",
+              "  pm.expect(txt).to.include('#EXT-X-VERSION:7');",
+              "});",
+              "pm.test('lista segmentos .m4s', () => pm.expect(txt).to.match(/^0\\.m4s$/m));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos/{{testVideoId}}/hls/{{testQuality}}/index.m3u8",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos",
+            "{{testVideoId}}",
+            "hls",
+            "{{testQuality}}",
+            "index.m3u8"
+          ]
+        }
+      }
+    },
+    {
+      "name": "HLS - Segmento se genera bajo demanda",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('devuelve un segmento con contenido', () => pm.expect(pm.response.responseSize).to.be.above(1000));",
+              "pm.test('es inmutable y cacheable', () => pm.expect(pm.response.headers.get('Cache-Control')).to.include('immutable'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos/{{testVideoId}}/hls/{{testQuality}}/0.m4s",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos",
+            "{{testVideoId}}",
+            "hls",
+            "{{testQuality}}",
+            "0.m4s"
+          ]
+        }
+      }
+    },
+    {
+      "name": "HLS - Segmento fuera de rango (404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos/{{testVideoId}}/hls/{{testQuality}}/9999.m4s",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos",
+            "{{testVideoId}}",
+            "hls",
+            "{{testQuality}}",
+            "9999.m4s"
+          ]
+        }
+      }
+    },
+    {
+      "name": "HLS - Calidad inexistente (404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos/{{testVideoId}}/hls/4320p/index.m3u8",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos",
+            "{{testVideoId}}",
+            "hls",
+            "4320p",
+            "index.m3u8"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Comments - Crear comentario raíz",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('testCommentId', pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/comments",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "comments"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"videoId\": \"{{testVideoId}}\", \"content\": \"Comentario ra\\u00edz de QA\"}"
+        }
+      }
+    },
+    {
+      "name": "Comments - Responder a un comentario",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('testReplyId', pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/comments",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "comments"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"videoId\": \"{{testVideoId}}\", \"content\": \"Respuesta de QA\", \"parentId\": \"{{testCommentId}}\"}"
+        }
+      }
+    },
+    {
+      "name": "Comments - El hilo llega anidado",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const hilo = pm.response.json();",
+              "pm.test('una sola raíz', () => pm.expect(hilo).to.have.lengthOf(1));",
+              "pm.test('la respuesta cuelga de la raíz', () => {",
+              "  pm.expect(hilo[0].id).to.eql(Number(pm.collectionVariables.get('testCommentId')));",
+              "  pm.expect(hilo[0].replies).to.have.lengthOf(1);",
+              "  pm.expect(hilo[0].replies[0].id).to.eql(Number(pm.collectionVariables.get('testReplyId')));",
+              "});",
+              "pm.test('trae los contadores de votos', () => {",
+              "  pm.expect(hilo[0].likes).to.eql(0);",
+              "  pm.expect(hilo[0].dislikes).to.eql(0);",
+              "  pm.expect(hilo[0].my_vote).to.eql(0);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos/{{testVideoId}}/comments",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos",
+            "{{testVideoId}}",
+            "comments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Comments - Votar like",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 201', () => pm.response.to.have.status(201));",
+              "const v = pm.response.json();",
+              "pm.test('suma el like', () => {",
+              "  pm.expect(v.likes).to.eql(1);",
+              "  pm.expect(v.my_vote).to.eql(1);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/comments/{{testCommentId}}/vote",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "comments",
+            "{{testCommentId}}",
+            "vote"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"value\": 1}"
+        }
+      }
+    },
+    {
+      "name": "Comments - Cambiar el voto a dislike",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const v = pm.response.json();",
+              "pm.test('el like se convierte en dislike, no se suma otro voto', () => {",
+              "  pm.expect(v.likes).to.eql(0);",
+              "  pm.expect(v.dislikes).to.eql(1);",
+              "  pm.expect(v.my_vote).to.eql(-1);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/comments/{{testCommentId}}/vote",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "comments",
+            "{{testCommentId}}",
+            "vote"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"value\": -1}"
+        }
+      }
+    },
+    {
+      "name": "Comments - Sacar el voto",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const v = pm.response.json();",
+              "pm.test('queda sin votos', () => {",
+              "  pm.expect(v.likes).to.eql(0);",
+              "  pm.expect(v.dislikes).to.eql(0);",
+              "  pm.expect(v.my_vote).to.eql(0);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/comments/{{testCommentId}}/vote",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "comments",
+            "{{testCommentId}}",
+            "vote"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"value\": 0}"
+        }
+      }
+    },
+    {
+      "name": "Comments - Voto inválido (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/comments/{{testCommentId}}/vote",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "comments",
+            "{{testCommentId}}",
+            "vote"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"value\": 7}"
+        }
+      }
+    },
+    {
+      "name": "Reels - Subir un vertical corto",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('testReelId', pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos"
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "title",
+              "value": "Reel de QA",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": "tests/postman/fixtures/reel.mp4"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Reels - El feed incluye el vertical y excluye el horizontal",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const feed = pm.response.json();",
+              "pm.test('devuelve un array (no colisiona con /videos/:id)', () => pm.expect(feed).to.be.an('array'));",
+              "const ids = feed.map((r) => r.id);",
+              "pm.test('el vertical corto está', () => pm.expect(ids).to.include(Number(pm.collectionVariables.get('testReelId'))));",
+              "pm.test('el horizontal no está', () => pm.expect(ids).to.not.include(Number(pm.collectionVariables.get('testVideoId'))));",
+              "pm.test('todos son verticales', () => feed.forEach((r) => pm.expect(r.height).to.be.above(r.width)));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos/reels",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos",
+            "reels"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Reels - Paginación con parámetros basura usa los defaults",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('no revienta y devuelve un array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos/reels?limit=abc&offset=-5",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos",
+            "reels?limit=abc&offset=-5"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Channels - Registrar segundo usuario (cambia de sesión)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('testUsername2', pm.response.json().username);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\": \"{{testEmail2}}\", \"username\": \"{{testUsername2}}\", \"password\": \"qa_test_pass\"}"
+        }
+      }
+    },
+    {
+      "name": "Channels - El canal ajeno arranca sin suscripción",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const c = pm.response.json();",
+              "pm.test('is_subscribed false para el visitante logueado', () => pm.expect(c.is_subscribed).to.eql(false));",
+              "pm.test('cuenta los videos del canal', () => pm.expect(c.video_count).to.eql(2));",
+              "pm.test('arranca sin suscriptores', () => pm.expect(c.subscriber_count).to.eql(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/channels/{{testUsername}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "channels",
+            "{{testUsername}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Channels - Suscribirse",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 201', () => pm.response.to.have.status(201));",
+              "const r = pm.response.json();",
+              "pm.test('queda suscrito y devuelve el total', () => {",
+              "  pm.expect(r.is_subscribed).to.eql(true);",
+              "  pm.expect(r.subscriber_count).to.eql(1);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/channels/{{testUsername}}/subscribe",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "channels",
+            "{{testUsername}}",
+            "subscribe"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Channels - Suscribirse otra vez es idempotente",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('sigue habiendo un solo suscriptor', () => pm.expect(pm.response.json().subscriber_count).to.eql(1));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/channels/{{testUsername}}/subscribe",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "channels",
+            "{{testUsername}}",
+            "subscribe"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Channels - El feed trae los videos del canal seguido",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('trae los 2 videos del canal', () => pm.expect(pm.response.json()).to.have.lengthOf(2));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/subscriptions/feed",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "subscriptions",
+            "feed"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Channels - Lista de suscripciones",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const subs = pm.response.json();",
+              "pm.test('sigue a un solo canal', () => pm.expect(subs).to.have.lengthOf(1));",
+              "pm.test('es el canal correcto', () => pm.expect(subs[0].username).to.eql(pm.collectionVariables.get('testUsername')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/subscriptions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "subscriptions"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Channels - Auto-suscripción rechazada (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 400', () => pm.response.to.have.status(400));",
+              "pm.test('lo explica', () => pm.expect(pm.response.json().error).to.include('propio canal'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/channels/{{testUsername2}}/subscribe",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "channels",
+            "{{testUsername2}}",
+            "subscribe"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Channels - Canal inexistente (404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/channels/canal-que-no-existe-qa",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "channels",
+            "canal-que-no-existe-qa"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Comments - Borrar comentario ajeno (403)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 403', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/comments/{{testCommentId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "comments",
+            "{{testCommentId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Channels - Desuscribirse",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const r = pm.response.json();",
+              "pm.test('vuelve a cero', () => {",
+              "  pm.expect(r.is_subscribed).to.eql(false);",
+              "  pm.expect(r.subscriber_count).to.eql(0);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/channels/{{testUsername}}/subscribe",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "channels",
+            "{{testUsername}}",
+            "subscribe"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Channels - Desuscribirse de nuevo no rompe",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('sigue en cero', () => pm.expect(pm.response.json().subscriber_count).to.eql(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/channels/{{testUsername}}/subscribe",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "channels",
+            "{{testUsername}}",
+            "subscribe"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Auth - Volver a entrar como el primer usuario",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 201', () => pm.response.to.have.status(201));",
+              "pm.test('es el usuario original', () => pm.expect(pm.response.json().username).to.eql(pm.collectionVariables.get('testUsername')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\": \"{{testEmail}}\", \"password\": \"qa_test_pass\"}"
+        }
+      }
+    },
+    {
+      "name": "Comments - Borrar el propio arrastra las respuestas",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/comments/{{testCommentId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "comments",
+            "{{testCommentId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Comments - El hilo quedó vacío (cascada)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('se fueron la raíz y su respuesta', () => pm.expect(pm.response.json()).to.have.lengthOf(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/videos/{{testVideoId}}/comments",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "videos",
+            "{{testVideoId}}",
+            "comments"
+          ]
+        }
       }
     },
     {
@@ -276,12 +1536,153 @@
       "request": {
         "method": "POST",
         "header": [],
-        "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/logout",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "logout"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Channels - Suscribirse sin sesión (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/channels/{{testUsername}}/subscribe",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "channels",
+            "{{testUsername}}",
+            "subscribe"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Channels - El canal es público pero sin is_subscribed",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('is_subscribed null: no hay quién mire', () => pm.expect(pm.response.json().is_subscribed).to.eql(null));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/channels/{{testUsername}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "channels",
+            "{{testUsername}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Comments - Crear sin sesión (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/comments",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "comments"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"videoId\": \"{{testVideoId}}\", \"content\": \"an\\u00f3nimo\"}"
+        }
       }
     }
   ],
   "variable": [
-    { "key": "testUsername", "value": "" },
-    { "key": "testUserId", "value": "" }
+    {
+      "key": "testUsername",
+      "value": ""
+    },
+    {
+      "key": "testEmail",
+      "value": ""
+    },
+    {
+      "key": "testUserId",
+      "value": ""
+    },
+    {
+      "key": "testVideoId",
+      "value": ""
+    },
+    {
+      "key": "testReelId",
+      "value": ""
+    },
+    {
+      "key": "testCommentId",
+      "value": ""
+    },
+    {
+      "key": "testReplyId",
+      "value": ""
+    },
+    {
+      "key": "testQuality",
+      "value": ""
+    },
+    {
+      "key": "testUsername2",
+      "value": ""
+    },
+    {
+      "key": "testEmail2",
+      "value": ""
+    }
   ]
 }

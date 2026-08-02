@@ -5,3 +5,7 @@ coverage
 # No subimos los videos al repositorio
 /uploads/*
 !/uploads/.gitkeep
+# Segmentos HLS generados al vuelo: es caché, se regenera sola.
+/hls-cache
+# Videos de prueba de la colección Postman: se generan con scripts/make-fixtures.js
+/tests/postman/fixtures

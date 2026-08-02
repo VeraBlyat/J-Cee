@@ -36,6 +36,16 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
+      # FFmpeg es dependencia de runtime del backend, igual que en el
+      # Dockerfile de producción: sin él fallan la subida de videos (ffprobe)
+      # y el streaming HLS. Los runners de GitHub no lo traen garantizado.
+      - name: Instalar FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version | head -1
+          ffprobe -version | head -1
+
       - name: Instalar dependencias
         run: npm ci
 
@@ -66,8 +76,16 @@ jobs:
       - name: Esperar a que el backend responda
         run: npx wait-on http://localhost:3001/api/health --timeout 60000
 
+      # La colección sube videos de verdad para probar HLS, comentarios y
+      # reels. Los fixtures no están en git: se generan acá con FFmpeg.
+      - name: Generar videos de prueba
+        run: npm run fixtures
+
       - name: Pruebas de integración (Postman/Newman)
-        run: npx newman run tests/postman/unistream-collection.json --environment tests/postman/qa.postman_environment.json --timeout-request 15000
+        # 30s por request: el primer segmento HLS de cada calidad se
+        # transcodifica en el momento, y un runner compartido es más lento
+        # que una máquina local.
+        run: npx newman run tests/postman/unistream-collection.json --environment tests/postman/qa.postman_environment.json --timeout-request 30000
 
       - name: Detener backend
         if: always()

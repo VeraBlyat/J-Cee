@@ -2,15 +2,22 @@ import { unlink } from 'fs/promises';
 import { join } from 'path';
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { TranscodeService } from '../videos/transcode.service';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly transcode: TranscodeService,
+  ) {}
 
   // --- Usuarios ---
+  // El email va acá porque es la credencial de acceso: sin él, un admin no
+  // puede distinguir dos cuentas ni identificar a quién le está tocando el rol.
+  // Nunca seleccionamos "password", ni siquiera hasheada.
   async listUsers() {
     const result = await this.db.query(
-      'SELECT id, username, is_admin, created_at FROM users ORDER BY created_at DESC',
+      'SELECT id, username, email, is_admin, created_at FROM users ORDER BY created_at DESC',
     );
     return result.rows;
   }
@@ -26,11 +33,12 @@ export class AdminService {
     // Borramos comentarios, luego videos (+ archivos) y por último el usuario.
     await this.db.query('DELETE FROM comments WHERE user_id = $1', [id]);
     const videos = await this.db.query(
-      'SELECT file_path FROM videos WHERE user_id = $1',
+      'SELECT id, file_path FROM videos WHERE user_id = $1',
       [id],
     );
     for (const video of videos.rows) {
       await this.unlinkFile(video.file_path);
+      await this.transcode.dropCache(video.id);
     }
     await this.db.query('DELETE FROM videos WHERE user_id = $1', [id]);
     await this.db.query('DELETE FROM users WHERE id = $1', [id]);
@@ -55,6 +63,8 @@ export class AdminService {
     if (result.rows.length === 0) return false;
     await this.db.query('DELETE FROM videos WHERE id = $1', [id]);
     await this.unlinkFile(result.rows[0].file_path);
+    // Los segmentos ya transcodificados quedarían huérfanos ocupando disco.
+    await this.transcode.dropCache(id);
     return true;
   }
 
