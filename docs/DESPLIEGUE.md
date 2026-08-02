@@ -26,7 +26,15 @@ reconstruir desde el texto plano después del hecho, y no hay flujo de
 recuperación de contraseña todavía, así que los usuarios existentes quedarían
 sin poder entrar igual. Se decidió que todos vuelvan a registrarse.
 
-**Alcance:** borra usuarios, videos, comentarios, suscripciones y hashtags.
+**Alcance:** borra las siete tablas del esquema — `users`, `videos`,
+`comments`, `comment_votes`, `hashtags`, `video_hashtags` y `subscriptions`.
+
+Tienen que ser todas. Si el reset dejara alguna afuera, el `DROP TABLE ...
+CASCADE` de las demás le borra las *foreign keys* pero no sus filas, y
+`schema.sql` tampoco la vuelve a crear porque usa `CREATE TABLE IF NOT EXISTS`.
+Quedarían filas huérfanas apuntando a ids que el `SERIAL` va a reutilizar, y ya
+sin la FK que lo impida: el primer video que se suba hereda los hashtags de un
+video borrado, y las suscripciones apuntan a usuarios que no existen.
 
 ### Cómo correrlo
 
@@ -50,14 +58,43 @@ filas hay en cada tabla:
   Base     : jandcee
   Usuario  : jceeadmin
 
-  users: 12 filas
-  videos: 4 filas
+  comment_votes: 0 filas
+  video_hashtags: 0 filas
+  subscriptions: 0 filas
   comments: 31 filas
+  videos: 4 filas
+  hashtags: 0 filas
+  users: 12 filas
 ```
+
+Las tablas nuevas van a decir `0 filas` o `(no existe todavía)` la primera vez:
+producción todavía corre el esquema viejo, así que es lo esperado.
 
 Si esos datos no son los que esperabas, cortá con Ctrl+C antes de confirmar.
 Equivocarse de entorno al pegar una connection string es el error caro de este
 comando.
+
+### Recuperar el primer admin
+
+El reset deja `users` vacía, y eso incluye a los administradores. `is_admin`
+sólo se cambia desde `PATCH /api/admin/users`, que está detrás de `AdminGuard`:
+hace falta ser admin para nombrar a otro admin. Sobre una base recién reseteada
+no hay ninguno, así que **el panel queda inaccesible hasta que se nombre al
+primero a mano**.
+
+Para eso está `db:make-admin`. Se corre una sola vez, después de registrar la
+primera cuenta desde la web:
+
+```bash
+DATABASE_URL='postgresql://USUARIO:CLAVE@SERVIDOR.postgres.database.azure.com:5432/BASE' \
+DATABASE_SSL=true \
+npm run db:make-admin -- tu-email@ejemplo.com
+```
+
+El email se normaliza igual que en el registro (sin espacios y en minúsculas),
+así que no importa cómo lo escribas. Si no hay ningún usuario con ese email, el
+script avisa y no toca nada. De ahí en adelante los admins se nombran desde el
+panel, como siempre.
 
 ### Orden recomendado
 
@@ -65,8 +102,9 @@ comando.
    Así la ventana en la que la app vieja convive con el esquema nuevo dura lo
    mínimo.
 2. Hacer push a `production` y dejar que el pipeline despliegue.
-3. Verificar `/api/health` (el propio workflow ya lo hace) y registrar una
-   cuenta de prueba.
+3. Verificar `/api/health` (el propio workflow ya lo hace) y registrar la
+   cuenta que va a ser la de administración.
+4. Correr `db:make-admin` con ese email y confirmar que `/admin` responde.
 
 De acá en adelante **no hace falta ningún reset más**: todas las migraciones
 posteriores (HLS, miniaturas, hashtags, suscripciones, comentarios) usan
@@ -103,6 +141,35 @@ streaming responde 500.
 | `FRONTEND_ORIGIN` | `http://localhost:3000` | Origen permitido por CORS. |
 | `HLS_MAX_CONCURRENT` | `2` | Tope de FFmpeg simultáneos. |
 | `HLS_CACHE_MAX_BYTES` | `2 GB` | Tamaño máximo de la caché de segmentos. |
+
+En producción sólo hacen falta las dos primeras. `PORT` lo inyecta App Service,
+`FRONTEND_ORIGIN` no se usa porque el navegador le pega a `/api` en el mismo
+origen (Next hace de proxy hacia el backend, que sólo escucha en localhost
+dentro del contenedor), y los dos límites de HLS tienen defaults razonables.
+
+### App settings del App Service
+
+| Setting | Valor |
+| --- | --- |
+| `DATABASE_URL` | La connection string de Azure Database for PostgreSQL. |
+| `DATABASE_SSL` | `true`. Azure rechaza las conexiones sin SSL. |
+| `WEBSITES_PORT` | `8080`, el mismo que expone el Dockerfile. |
+
+Si el sitio queda en "Application Error" apenas despliega, mirá primero
+`WEBSITES_PORT`: App Service asume el 80 y el contenedor escucha en el 8080.
+
+### Secrets del repositorio
+
+Los usa `.github/workflows/production.yml`. Sin alguno de estos el pipeline
+falla en el job correspondiente, no en el deploy:
+
+| Secret | Job |
+| --- | --- |
+| `ACR_LOGIN_SERVER`, `ACR_USERNAME`, `ACR_PASSWORD` | `docker-build-push` |
+| `AZURE_CREDENTIALS`, `AZURE_WEBAPP_NAME` | `deploy-azure` |
+
+`deploy-azure` corre sobre el *environment* `production` de GitHub: si tiene
+revisores configurados, el deploy queda esperando aprobación después del push.
 
 ---
 

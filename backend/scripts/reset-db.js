@@ -13,6 +13,22 @@ const { Pool } = require('pg');
 
 const CONFIRM_FLAG = '--si-quiero-borrar-todo';
 
+// TODAS las tablas del esquema, de la más dependiente a la menos. Tiene que
+// estar completa: si una tabla nueva queda afuera, el DROP ... CASCADE de las
+// otras le borra la foreign key pero NO sus filas, y schema.sql tampoco la
+// vuelve a crear porque usa CREATE TABLE IF NOT EXISTS. Resultado: filas
+// huérfanas apuntando a ids que el SERIAL va a reutilizar, y sin la FK que lo
+// impida (hashtags de otro video, suscripciones a usuarios que ya no existen).
+const TABLES = [
+  'comment_votes',
+  'video_hashtags',
+  'subscriptions',
+  'comments',
+  'videos',
+  'hashtags',
+  'users',
+];
+
 async function main() {
   if (!process.argv.includes(CONFIRM_FLAG)) {
     console.error(
@@ -47,7 +63,7 @@ async function main() {
   try {
     // Antes de borrar, mostramos qué se va a perder. Si el script se corrió
     // contra la base equivocada, este es el último momento para verlo.
-    for (const table of ['users', 'videos', 'comments']) {
+    for (const table of TABLES) {
       try {
         const { rows } = await pool.query(
           `SELECT count(*)::int AS n FROM ${table}`,
@@ -60,7 +76,7 @@ async function main() {
 
     // CASCADE para que caigan también las FK entre ellas. El orden no importa
     // con CASCADE, pero las listamos de la más dependiente a la menos.
-    await pool.query('DROP TABLE IF EXISTS comments, videos, users CASCADE');
+    await pool.query(`DROP TABLE IF EXISTS ${TABLES.join(', ')} CASCADE`);
     console.log('Tablas borradas.');
 
     const schemaPath = path.join(__dirname, '..', '..', 'schema.sql');

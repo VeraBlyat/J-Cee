@@ -13,6 +13,7 @@
     "test:api": "jest",
     "migrate": "node scripts/migrate.js",
     "db:reset": "node scripts/reset-db.js",
+    "db:make-admin": "node scripts/make-admin.js",
     "fixtures": "node scripts/make-fixtures.js"
   },
   "dependencies": {
