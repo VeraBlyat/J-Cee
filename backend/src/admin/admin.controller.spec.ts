@@ -12,7 +12,7 @@ describe('AdminController', () => {
     deleteVideo: jest.Mock;
   };
 
-  const admin = { id: 1, username: 'root', is_admin: true };
+  const admin = { id: 1, username: 'root', email: 'root@mail.com', is_admin: true };
 
   beforeEach(async () => {
     service = {

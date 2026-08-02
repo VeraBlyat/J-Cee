@@ -11,6 +11,8 @@ el puerto `3000` y el backend en el `3001`.
   el flujo de datos, la autenticación y el modelo de datos.
 - [Referencia de la API](docs/API.md) — todos los endpoints del backend, con
   ejemplos de petición y respuesta.
+- [Despliegue](docs/DESPLIEGUE.md) — migraciones por entorno, el reset único
+  de producción, FFmpeg y variables de entorno.
 - [Cómo contribuir](CONTRIBUTING.md) — flujo de ramas, commits y Pull
   Requests.
 

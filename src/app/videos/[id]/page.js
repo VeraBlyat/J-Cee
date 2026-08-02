@@ -1,8 +1,16 @@
-import { serverFetch, getCurrentUser } from "@/lib/api";
-import CommentForm from "@/components/CommentForm";
+import { serverFetch } from "@/lib/api";
+import CommentThread from "@/components/CommentThread";
+import VideoPlayer from "@/components/VideoPlayer";
+import SubscribeButton from "@/components/SubscribeButton";
+import UpNext from "@/components/UpNext";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
+
+function plural(n, singular, plural) {
+  return `${n} ${n === 1 ? singular : plural}`;
+}
 
 export default async function VideoPage({ params }) {
   // En Next 15, params es una promesa: hay que esperarla.
@@ -15,53 +23,108 @@ export default async function VideoPage({ params }) {
   const commentsRes = await serverFetch(`/videos/${id}/comments`);
   const comments = commentsRes.ok ? await commentsRes.json() : [];
 
-  const user = await getCurrentUser();
+  // Datos del canal, para el botón de suscripción. Sólo si el video tiene
+  // autor: los videos de usuarios borrados quedan sin username.
+  let channel = null;
+  if (video.username) {
+    const channelRes = await serverFetch(
+      `/channels/${encodeURIComponent(video.username)}`
+    );
+    if (channelRes.ok) channel = await channelRes.json();
+  }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {/* El navegador reproduce el MP4 directamente. controls muestra los botones.
-          file_path ya es una ruta pública ("/uploads/..."), no necesita prefijo. */}
-      <video
-        src={video.file_path}
-        controls
-        className="w-full rounded-lg bg-black"
-      />
-
-      <h1 className="text-2xl font-bold mt-4">{video.title}</h1>
-      <p className="text-sm text-gray-400 mt-1">
-        Subido por {video.username || "Anónimo"}
-      </p>
-
-      {video.description && (
-        <p className="mt-3 text-gray-300 whitespace-pre-line">
-          {video.description}
-        </p>
-      )}
-
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold mb-4">
-          Comentarios ({comments.length})
-        </h2>
-
-        {user ? (
-          <CommentForm videoId={video.id} />
+    <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
+      <div className="min-w-0">
+        {/* Reproductor propio sobre HLS: los segmentos los genera el backend
+            bajo demanda y hls.js va cambiando de calidad según la conexión.
+            Los videos subidos antes de la Fase 2 no tienen metadata de
+            streaming, así que para esos caemos al MP4 original. */}
+        {video.duration_seconds ? (
+          <VideoPlayer videoId={video.id} title={video.title} />
         ) : (
-          <p className="text-gray-400 text-sm mb-4">
-            Inicia sesión para comentar.
-          </p>
+          <video
+            src={video.file_path}
+            controls
+            className="aspect-video w-full rounded-card bg-black shadow-jc-lg"
+          />
         )}
 
-        <ul className="space-y-3 mt-4">
-          {comments.map((c) => (
-            <li key={c.id} className="border-b border-gray-800 pb-2">
-              <p className="text-sm font-medium text-red-400">
-                {c.username || "Anónimo"}
-              </p>
-              <p className="text-gray-200">{c.content}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
+        <h1 className="mb-1.5 mt-4 font-display text-xl font-bold leading-tight text-text">
+          {video.title}
+        </h1>
+
+        <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted">
+            {video.hashtags?.length > 0 && (
+              <span className="mr-1">
+                {video.hashtags.map((tag) => (
+                  <Link
+                    key={tag}
+                    href={`/?hashtag=${encodeURIComponent(tag)}`}
+                    className="mr-1.5 text-brand hover:underline"
+                  >
+                    #{tag}
+                  </Link>
+                ))}
+              </span>
+            )}
+          </p>
+        </div>
+
+        {/* Fila del canal, con el botón de suscripción al lado del autor: es
+            donde se decide seguir a alguien, justo después de ver su video. */}
+        <div className="mb-3.5 flex items-center gap-3 border-y border-border py-3.5">
+          {video.username ? (
+            <>
+              <Link
+                href={`/canal/${encodeURIComponent(video.username)}`}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand to-brand-3 font-display font-bold text-white"
+              >
+                {video.username.charAt(0).toUpperCase()}
+              </Link>
+              <div className="min-w-0">
+                <Link
+                  href={`/canal/${encodeURIComponent(video.username)}`}
+                  className="block text-sm font-bold text-text hover:text-brand"
+                >
+                  @{video.username}
+                </Link>
+                {channel && (
+                  <p className="mt-0.5 text-[11.5px] text-muted">
+                    {plural(channel.subscriber_count, "suscriptor", "suscriptores")}
+                  </p>
+                )}
+              </div>
+            </>
+          ) : (
+            <span className="text-sm text-muted">Anónimo</span>
+          )}
+
+          {video.username && channel && (
+            <div className="ml-auto">
+              <SubscribeButton
+                username={video.username}
+                initialSubscribed={channel.is_subscribed === true}
+                initialCount={channel.subscriber_count}
+              />
+            </div>
+          )}
+        </div>
+
+        {video.description && (
+          <div className="mb-[22px] whitespace-pre-line rounded-field border border-border bg-card p-3.5 text-[12.5px] leading-relaxed text-muted">
+            {video.description}
+          </div>
+        )}
+
+        {/* El hilo es de cliente: los votos y el formulario de respuesta tienen
+            que responder sin recargar. Los datos ya vienen resueltos del
+            servidor, con my_vote calculado para este visitante. */}
+        <CommentThread videoId={video.id} comments={comments} />
+      </div>
+
+      <UpNext currentId={video.id} />
     </div>
   );
 }

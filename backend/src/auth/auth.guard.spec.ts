@@ -19,7 +19,7 @@ describe('AuthGuard', () => {
   });
 
   it('permite el paso y setea req.user cuando hay sesión válida', async () => {
-    const user = { id: 1, username: 'toby', is_admin: false };
+    const user = { id: 1, username: 'toby', email: 'toby@mail.com', is_admin: false };
     authService.getUserById.mockResolvedValue(user);
     const context = makeContext({ userId: '1' });
 

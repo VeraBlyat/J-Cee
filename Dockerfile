@@ -45,6 +45,13 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
 
+# FFmpeg es una dependencia de RUNTIME, no de build: el backend lo invoca como
+# proceso externo para leer la metadata al subir (ffprobe) y para generar los
+# segmentos HLS bajo demanda (ffmpeg). Sin esto, la subida de videos falla con
+# "El archivo no es un video válido" y el streaming devuelve 500.
+# El paquete "ffmpeg" de Alpine trae los dos binarios.
+RUN apk add --no-cache ffmpeg && ffmpeg -version && ffprobe -version
+
 # Frontend: salida standalone de Next (server.js + node_modules podados).
 COPY --from=frontend-builder /app/.next/standalone ./
 COPY --from=frontend-builder /app/.next/static ./.next/static

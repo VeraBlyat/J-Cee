@@ -19,7 +19,7 @@ describe('AdminGuard', () => {
   });
 
   it('permite el paso cuando el usuario es admin', async () => {
-    const admin = { id: 1, username: 'root', is_admin: true };
+    const admin = { id: 1, username: 'root', email: 'root@mail.com', is_admin: true };
     authService.getUserById.mockResolvedValue(admin);
     const context = makeContext({ userId: '1' });
 
@@ -31,6 +31,7 @@ describe('AdminGuard', () => {
     authService.getUserById.mockResolvedValue({
       id: 2,
       username: 'user',
+      email: 'user@mail.com',
       is_admin: false,
     });
     const context = makeContext({ userId: '2' });

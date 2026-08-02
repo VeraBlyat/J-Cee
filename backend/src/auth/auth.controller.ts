@@ -22,28 +22,32 @@ const COOKIE_OPTIONS: CookieOptions = {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // La credencial ahora es el email; "username" pasó a ser el nombre público
+  // del canal y ya no sirve para iniciar sesión.
   @Post('login')
   async login(
-    @Body() body: { username?: string; password?: string },
+    @Body() body: { email?: string; password?: string },
     @Res({ passthrough: true }) res: Response,
   ) {
-    const user = await this.authService.login(body.username, body.password);
+    const user = await this.authService.login(body.email, body.password);
     res.cookie('userId', String(user.id), COOKIE_OPTIONS);
-    return { id: user.id, username: user.username };
+    return { id: user.id, username: user.username, email: user.email };
   }
 
   @Post('register')
   async register(
-    @Body() body: { username?: string; password?: string },
+    @Body() body: { email?: string; username?: string; password?: string },
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { username, password } = body;
-    if (!username || !password) {
-      throw new BadRequestException('Usuario y contraseña son obligatorios.');
+    const { email, username, password } = body;
+    if (!email || !username || !password) {
+      throw new BadRequestException(
+        'Email, nombre de usuario y contraseña son obligatorios.',
+      );
     }
-    const user = await this.authService.register(username, password);
+    const user = await this.authService.register(email, username, password);
     res.cookie('userId', String(user.id), COOKIE_OPTIONS);
-    return { id: user.id, username: user.username };
+    return { id: user.id, username: user.username, email: user.email };
   }
 
   @Post('logout')

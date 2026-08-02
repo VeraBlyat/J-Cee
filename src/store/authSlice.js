@@ -10,11 +10,13 @@ function errorMessage(err, fallback) {
   return err.response?.data?.error || fallback;
 }
 
+// La credencial es el email. "username" es el nombre público del canal y sólo
+// se pide al registrarse.
 export const login = createAsyncThunk(
   "auth/login",
-  async ({ username, password }, { rejectWithValue }) => {
+  async ({ email, password }, { rejectWithValue }) => {
     try {
-      await http.post("/auth/login", { username, password });
+      await http.post("/auth/login", { email, password });
       const { data } = await http.get("/auth/me");
       return data;
     } catch (err) {
@@ -25,9 +27,9 @@ export const login = createAsyncThunk(
 
 export const register = createAsyncThunk(
   "auth/register",
-  async ({ username, password }, { rejectWithValue }) => {
+  async ({ email, username, password }, { rejectWithValue }) => {
     try {
-      await http.post("/auth/register", { username, password });
+      await http.post("/auth/register", { email, username, password });
       const { data } = await http.get("/auth/me");
       return data;
     } catch (err) {
