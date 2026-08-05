@@ -60,8 +60,10 @@ export class AuthController {
   // email, para no revelar qué cuentas están registradas.
   //
   // Nota: este proyecto no tiene servidor de correo, así que el enlace no se
-  // "envía": se escribe en el log del backend y, fuera de producción, se
-  // devuelve en la respuesta para poder probar el flujo de punta a punta.
+  // "envía": siempre se escribe en el log del backend. Además se devuelve en
+  // la respuesta cuando se pide explícitamente (ver shouldExposeResetLink):
+  // fuera de producción por comodidad, y en producción sólo si se prende
+  // EXPOSE_RESET_LINK=true, que es el caso de un despliegue sin correo todavía.
   // Cuando haya SMTP, esto se reemplaza por un mail y se deja de exponer.
   @Post('forgot-password')
   async forgotPassword(@Body() body: { email?: string }) {
@@ -76,7 +78,7 @@ export class AuthController {
     }
 
     const response: { ok: true; resetUrl?: string } = { ok: true };
-    if (resetUrl && process.env.NODE_ENV !== 'production') {
+    if (resetUrl && shouldExposeResetLink()) {
       response.resetUrl = resetUrl;
     }
     return response;
@@ -94,4 +96,16 @@ export class AuthController {
     const user = await this.authService.getUserById(req.cookies?.userId);
     return user;
   }
+}
+
+// ¿Se devuelve el enlace de recuperación en la respuesta HTTP? Sin servidor de
+// correo es la única forma de que el usuario reciba el link.
+//   - En dev (NODE_ENV != production): sí, para poder probar sin fricción.
+//   - En producción: sólo si EXPOSE_RESET_LINK=true. Pensado para un despliegue
+//     que todavía no tiene SMTP; se apaga (default) apenas haya envío por mail.
+// Exponerlo implica que cualquiera que pida un reseteo recibe el token, así que
+// es una decisión explícita y no el comportamiento por defecto en producción.
+function shouldExposeResetLink(): boolean {
+  if (process.env.NODE_ENV !== 'production') return true;
+  return process.env.EXPOSE_RESET_LINK === 'true';
 }

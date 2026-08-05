@@ -151,15 +151,15 @@ export default function LoginPage() {
                 restablecer la contraseña. Revisá tu bandeja de entrada.
               </div>
 
-              {/* Sin servidor de correo (dev): el backend devuelve el enlace
-                  directamente para poder probar el flujo. */}
+              {/* Sin servidor de correo, el backend devuelve el enlace
+                  directamente (cuando está habilitado) para poder usarlo. */}
               {resetUrl && (
                 <div className="mb-5 rounded-field border-[1.5px] border-dashed border-brand-3 bg-page-2 p-4 text-[12px] leading-relaxed text-muted">
                   <p className="mb-2 font-semibold text-text">
-                    Modo desarrollo
+                    Enlace de recuperación
                   </p>
-                  No hay servidor de correo configurado, así que este es el
-                  enlace de recuperación:
+                  Como no hay servidor de correo configurado, usá este enlace
+                  para restablecer tu contraseña:
                   <Link
                     href={resetUrl.replace(/^https?:\/\/[^/]+/, "")}
                     className="mt-2 block break-all font-semibold text-brand hover:underline"
