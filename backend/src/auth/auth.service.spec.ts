@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import {
   BadRequestException,
   ConflictException,
@@ -231,6 +232,112 @@ describe('AuthService', () => {
       const user = await service.getUserById('999');
 
       expect(user).toBeNull();
+    });
+  });
+
+  describe('createPasswordReset', () => {
+    it('devuelve null sin consultar la DB si no hay email', async () => {
+      const token = await service.createPasswordReset(undefined);
+
+      expect(token).toBeNull();
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
+    it('devuelve null (y no crea token) si el email no existe', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }); // SELECT sin resultados
+
+      const token = await service.createPasswordReset('nadie@mail.com');
+
+      expect(token).toBeNull();
+      // Sólo el SELECT: no hay DELETE ni INSERT de token.
+      expect(db.query).toHaveBeenCalledTimes(1);
+    });
+
+    it('guarda el HASH del token, nunca el token en claro', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 5 }] }) // SELECT usuario
+        .mockResolvedValueOnce({ rows: [] }) // DELETE tokens viejos
+        .mockResolvedValueOnce({ rows: [] }); // INSERT token
+
+      const token = await service.createPasswordReset('toby@mail.com');
+
+      // El token que se devuelve es hex de 256 bits.
+      expect(token).toMatch(/^[a-f0-9]{64}$/);
+
+      const [, insertParams] = db.query.mock.calls[2];
+      const storedHash = insertParams[1];
+      expect(storedHash).not.toBe(token);
+      expect(storedHash).toBe(
+        createHash('sha256').update(token as string).digest('hex'),
+      );
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('rechaza sin tocar la DB si falta el token o la contraseña', async () => {
+      await expect(service.resetPassword(undefined, PASSWORD)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.resetPassword('token', undefined)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
+    it('rechaza una contraseña corta antes de buscar el token', async () => {
+      await expect(service.resetPassword('token', 'corta')).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
+    it('rechaza un token inexistente, vencido o ya usado', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }); // SELECT sin resultados
+
+      await expect(service.resetPassword('token', PASSWORD)).rejects.toThrow(
+        'El enlace de recuperación no es válido o ya venció.',
+      );
+    });
+
+    it('busca por el HASH del token, no por el token en claro', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(
+        service.resetPassword('mi-token', PASSWORD),
+      ).rejects.toThrow(BadRequestException);
+
+      const [, selectParams] = db.query.mock.calls[0];
+      expect(selectParams[0]).toBe(
+        createHash('sha256').update('mi-token').digest('hex'),
+      );
+      expect(selectParams[0]).not.toBe('mi-token');
+    });
+
+    it('guarda la nueva contraseña hasheada y marca el token como usado', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 10, user_id: 5 }] }) // SELECT token
+        .mockResolvedValueOnce({ rowCount: 1 }) // UPDATE token used_at
+        .mockResolvedValueOnce({ rowCount: 1 }); // UPDATE users password
+
+      await service.resetPassword('token', PASSWORD);
+
+      const [, updateUserParams] = db.query.mock.calls[2];
+      const stored = updateUserParams[0];
+      expect(stored).not.toBe(PASSWORD);
+      expect(stored).toMatch(/^\$2[aby]\$/);
+      await expect(bcrypt.compare(PASSWORD, stored)).resolves.toBe(true);
+    });
+
+    it('no cambia la contraseña si el token se consumió en el ínterin', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 10, user_id: 5 }] }) // SELECT token
+        .mockResolvedValueOnce({ rowCount: 0 }); // UPDATE token: ya no estaba
+
+      await expect(service.resetPassword('token', PASSWORD)).rejects.toThrow(
+        BadRequestException,
+      );
+      // Nunca se llega al UPDATE de users.
+      expect(db.query).toHaveBeenCalledTimes(2);
     });
   });
 });

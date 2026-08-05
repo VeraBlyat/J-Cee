@@ -1,6 +1,10 @@
 import { mkdir, rm, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { parseHashtags } from './hashtags';
 import { REEL_MAX_DURATION_SECONDS } from './reels';
@@ -19,6 +23,9 @@ export interface VideoRow {
   height: number | null;
   username: string | null;
   hashtags?: string[];
+  like_count?: number;
+  // Si el que mira ya le dio like. false cuando no hay sesión.
+  liked?: boolean;
 }
 
 @Injectable()
@@ -83,8 +90,9 @@ export class VideosService {
     return result.rows;
   }
 
-  // Detalle de un video (página /videos/:id).
-  async findOne(id: string) {
+  // Detalle de un video (página /videos/:id). viewerId es opcional: sirve para
+  // saber si el que mira ya le dio like (columna "liked").
+  async findOne(id: string, viewerId?: number) {
     if (!/^\d+$/.test(id)) return null;
 
     const result = await this.db.query<VideoRow>(
@@ -95,16 +103,61 @@ export class VideosService {
               COALESCE(
                 ARRAY_AGG(h.name ORDER BY h.name) FILTER (WHERE h.name IS NOT NULL),
                 '{}'
-              ) AS hashtags
+              ) AS hashtags,
+              -- Likes como subconsultas y no como JOIN: un JOIN a video_likes
+              -- multiplicaría las filas y rompería el ARRAY_AGG de hashtags.
+              (SELECT count(*)::int FROM video_likes vl WHERE vl.video_id = v.id)
+                AS like_count,
+              EXISTS(
+                SELECT 1 FROM video_likes vl
+                 WHERE vl.video_id = v.id AND vl.user_id = $2::int
+              ) AS liked
          FROM videos v
          LEFT JOIN users u ON u.id = v.user_id
          LEFT JOIN video_hashtags vh ON vh.video_id = v.id
          LEFT JOIN hashtags h ON h.id = vh.hashtag_id
         WHERE v.id = $1
         GROUP BY v.id, u.username`,
-      [id],
+      [id, viewerId ?? null],
     );
     return result.rows[0] || null;
+  }
+
+  // Da o saca el like del usuario. `liked` true = dar, false = sacar. Devuelve
+  // el total actualizado para que el front no tenga que adivinarlo sumando.
+  async setLike(videoId: string, userId: number, liked: boolean) {
+    if (!/^\d+$/.test(videoId)) {
+      throw new BadRequestException('Video inválido.');
+    }
+    const id = Number(videoId);
+
+    const exists = await this.db.query('SELECT 1 FROM videos WHERE id = $1', [
+      id,
+    ]);
+    if (exists.rows.length === 0) {
+      throw new NotFoundException('Video no encontrado.');
+    }
+
+    if (liked) {
+      // ON CONFLICT DO NOTHING: dar like dos veces no rompe ni suma de más,
+      // gracias a la PK (video_id, user_id).
+      await this.db.query(
+        `INSERT INTO video_likes (video_id, user_id) VALUES ($1, $2)
+         ON CONFLICT DO NOTHING`,
+        [id, userId],
+      );
+    } else {
+      await this.db.query(
+        'DELETE FROM video_likes WHERE video_id = $1 AND user_id = $2',
+        [id, userId],
+      );
+    }
+
+    const tally = await this.db.query<{ like_count: number }>(
+      'SELECT count(*)::int AS like_count FROM video_likes WHERE video_id = $1',
+      [id],
+    );
+    return { liked, like_count: tally.rows[0].like_count };
   }
 
   // Guarda el archivo, lo analiza con ffprobe y crea la fila. Devuelve el id.

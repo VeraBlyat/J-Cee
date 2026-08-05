@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from 'crypto';
 import {
   BadRequestException,
   ConflictException,
@@ -34,6 +35,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 72; // bcrypt ignora todo lo que pase de 72 bytes.
 
+// Cuánto vive un token de reseteo. Una hora es suficiente para revisar el mail
+// y bastante corto para que un token filtrado no sirva por mucho tiempo.
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+
 @Injectable()
 export class AuthService {
   constructor(private readonly db: DatabaseService) {}
@@ -43,6 +48,29 @@ export class AuthService {
   // usuario y el UNIQUE de la tabla funcione como esperamos.
   private normalizeEmail(email: string) {
     return email.trim().toLowerCase();
+  }
+
+  // Reglas de la contraseña, en un solo lugar: las usan el registro y el
+  // reseteo, así "mínimo 8" no puede quedar distinto en cada camino.
+  private assertValidPassword(password: string) {
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      throw new BadRequestException(
+        `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
+      );
+    }
+    if (Buffer.byteLength(password) > MAX_PASSWORD_LENGTH) {
+      throw new BadRequestException(
+        `La contraseña no puede superar los ${MAX_PASSWORD_LENGTH} caracteres.`,
+      );
+    }
+  }
+
+  // El token viaja al usuario en claro pero en la base guardamos sólo su hash,
+  // igual que con las contraseñas: así una fuga de la tabla no permite resetear
+  // nada. SHA-256 (y no bcrypt) alcanza porque el token ya es aleatorio y de
+  // 256 bits, no algo adivinable como una contraseña.
+  private hashToken(token: string) {
+    return createHash('sha256').update(token).digest('hex');
   }
 
   async login(email?: string, password?: string) {
@@ -87,16 +115,7 @@ export class AuthService {
         'El nombre de usuario debe tener entre 3 y 50 caracteres.',
       );
     }
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      throw new BadRequestException(
-        `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
-      );
-    }
-    if (Buffer.byteLength(password) > MAX_PASSWORD_LENGTH) {
-      throw new BadRequestException(
-        `La contraseña no puede superar los ${MAX_PASSWORD_LENGTH} caracteres.`,
-      );
-    }
+    this.assertValidPassword(password);
 
     // Chequeo previo sólo para dar un mensaje de error útil ("el email ya está
     // en uso" vs "ese nombre de usuario ya existe"). La garantía real es el
@@ -136,6 +155,83 @@ export class AuthService {
       }
       throw err;
     }
+  }
+
+  // Arranca la recuperación: si el email existe, crea un token y devuelve el
+  // token EN CLARO (para armar el link). Si no existe, devuelve null. El
+  // controller responde lo mismo en los dos casos, así que desde afuera no se
+  // puede averiguar qué emails están registrados.
+  async createPasswordReset(email?: string): Promise<string | null> {
+    if (!email) return null;
+
+    const result = await this.db.query<{ id: number }>(
+      'SELECT id FROM users WHERE email = $1',
+      [this.normalizeEmail(email)],
+    );
+    const user = result.rows[0];
+    if (!user) return null;
+
+    // Un pedido nuevo invalida los anteriores del mismo usuario: no tiene
+    // sentido dejar varios tokens vivos para la misma cuenta.
+    await this.db.query(
+      'DELETE FROM password_reset_tokens WHERE user_id = $1 AND used_at IS NULL',
+      [user.id],
+    );
+
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+
+    await this.db.query(
+      `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+       VALUES ($1, $2, $3)`,
+      [user.id, this.hashToken(token), expiresAt],
+    );
+
+    return token;
+  }
+
+  // Cierra la recuperación: valida el token y cambia la contraseña. El mismo
+  // mensaje de error para "no existe", "ya se usó" y "venció", para no darle
+  // pistas a quien prueba tokens al azar.
+  async resetPassword(token?: string, newPassword?: string) {
+    if (!token || !newPassword) {
+      throw new BadRequestException('Token o contraseña faltante.');
+    }
+    this.assertValidPassword(newPassword);
+
+    const result = await this.db.query<{ id: number; user_id: number }>(
+      `SELECT id, user_id FROM password_reset_tokens
+        WHERE token_hash = $1 AND used_at IS NULL AND expires_at > NOW()`,
+      [this.hashToken(token)],
+    );
+    const row = result.rows[0];
+    if (!row) {
+      throw new BadRequestException(
+        'El enlace de recuperación no es válido o ya venció.',
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    // Marcamos el token como usado en el mismo paso que cambiamos la clave, y
+    // sólo si seguía sin usar (used_at IS NULL), por si dos pedidos con el
+    // mismo token entran a la vez: uno gana y el otro no encuentra la fila.
+    const consumed = await this.db.query(
+      `UPDATE password_reset_tokens
+          SET used_at = NOW()
+        WHERE id = $1 AND used_at IS NULL`,
+      [row.id],
+    );
+    if (consumed.rowCount === 0) {
+      throw new BadRequestException(
+        'El enlace de recuperación no es válido o ya venció.',
+      );
+    }
+
+    await this.db.query('UPDATE users SET password = $1 WHERE id = $2', [
+      passwordHash,
+      row.user_id,
+    ]);
   }
 
   // Carga el usuario de la cookie "userId". Devuelve null si no hay sesión.

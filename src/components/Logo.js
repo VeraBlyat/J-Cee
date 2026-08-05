@@ -1,28 +1,26 @@
-// Marca de J-Cee: un cuerpo en forma de play (el triángulo) con cola de pez y
-// un ojo. Es el mismo SVG de los mockups.
+import Image from "next/image";
+
+// Marca de J-Cee: el pez-play verde. Ahora es el PNG de la marca (public/
+// logoP.png, sólo el ícono) en vez del SVG dibujado a mano. El fondo del
+// archivo es transparente, así que se ve igual sobre el header oscuro y sobre
+// la página clara.
 //
-// Los colores salen de las variables del tema, así que la marca acompaña el
-// cambio de claro a oscuro sin tener dos versiones del archivo.
+// El PNG mide 618x702, así que lo escalamos por alto y calculamos el ancho
+// para no deformarlo.
+const MARK_RATIO = 618 / 702;
+
 export function LogoMark({ size = 30, className = "" }) {
+  const height = Math.round(size);
+  const width = Math.round(size * MARK_RATIO);
   return (
-    <svg
-      viewBox="0 0 60 46"
-      width={size}
-      height={size * 0.77}
+    <Image
+      src="/logoP.png"
+      alt=""
+      width={width}
+      height={height}
       className={className}
-      aria-hidden="true"
-    >
-      {/* Cuerpo: el triángulo de "play" */}
-      <path d="M4 6 L44 23 L4 40 Z" fill="var(--jc-brand-2)" />
-      {/* Velo claro encima, para que el cuerpo no quede plano */}
-      <path d="M4 6 L44 23 L4 40 Z" fill="rgba(255,255,255,0.1)" />
-      {/* Cola */}
-      <path d="M36 17 L56 8 L52 23 L56 38 L36 29 Z" fill="var(--jc-brand-3)" />
-      {/* Ojo */}
-      <circle cx="16" cy="19" r="5.5" fill="#fff" />
-      <circle cx="17.6" cy="19.8" r="2.6" fill="#101a0c" />
-      <circle cx="18.5" cy="18.2" r="1" fill="#fff" />
-    </svg>
+      priority
+    />
   );
 }
 

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Header,
   NotFoundException,
@@ -17,6 +18,8 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { OptionalAuthGuard } from '../auth/optional-auth.guard';
+import { OptionalUser } from '../auth/optional-user.decorator';
 import { SessionUser } from '../auth/auth.service';
 import { parseHashtags } from './hashtags';
 import { paginationFrom } from './reels';
@@ -152,13 +155,31 @@ export class VideosController {
 
   // --- Detalle y subida --------------------------------------------------
 
+  // Público, pero "liked" depende de quién mira, así que el guard es opcional.
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const video = await this.videosService.findOne(id);
+  @UseGuards(OptionalAuthGuard)
+  async findOne(
+    @Param('id') id: string,
+    @OptionalUser() viewer: SessionUser | null,
+  ) {
+    const video = await this.videosService.findOne(id, viewer?.id);
     if (!video) {
       throw new NotFoundException('Video no encontrado.');
     }
     return video;
+  }
+
+  // Like / unlike. Devuelve el total actualizado y si quedó con like.
+  @Post(':id/like')
+  @UseGuards(AuthGuard)
+  like(@Param('id') id: string, @CurrentUser() user: SessionUser) {
+    return this.videosService.setLike(id, user.id, true);
+  }
+
+  @Delete(':id/like')
+  @UseGuards(AuthGuard)
+  unlike(@Param('id') id: string, @CurrentUser() user: SessionUser) {
+    return this.videosService.setLike(id, user.id, false);
   }
 
   @Post()

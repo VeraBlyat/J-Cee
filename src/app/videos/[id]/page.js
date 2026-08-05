@@ -2,6 +2,7 @@ import { serverFetch } from "@/lib/api";
 import CommentThread from "@/components/CommentThread";
 import VideoPlayer from "@/components/VideoPlayer";
 import SubscribeButton from "@/components/SubscribeButton";
+import LikeButton from "@/components/LikeButton";
 import UpNext from "@/components/UpNext";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -101,15 +102,22 @@ export default async function VideoPage({ params }) {
             <span className="text-sm text-muted">Anónimo</span>
           )}
 
-          {video.username && channel && (
-            <div className="ml-auto">
+          {/* Acciones del video: like siempre; suscribirse sólo si el video
+              tiene canal con datos cargados. */}
+          <div className="ml-auto flex items-center gap-2.5">
+            <LikeButton
+              videoId={video.id}
+              initialLikes={video.like_count}
+              initialLiked={video.liked}
+            />
+            {video.username && channel && (
               <SubscribeButton
                 username={video.username}
                 initialSubscribed={channel.is_subscribed === true}
                 initialCount={channel.subscriber_count}
               />
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {video.description && (

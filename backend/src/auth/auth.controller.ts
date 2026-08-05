@@ -56,6 +56,38 @@ export class AuthController {
     return { ok: true };
   }
 
+  // Pide un enlace de recuperación. Responde SIEMPRE lo mismo, exista o no el
+  // email, para no revelar qué cuentas están registradas.
+  //
+  // Nota: este proyecto no tiene servidor de correo, así que el enlace no se
+  // "envía": se escribe en el log del backend y, fuera de producción, se
+  // devuelve en la respuesta para poder probar el flujo de punta a punta.
+  // Cuando haya SMTP, esto se reemplaza por un mail y se deja de exponer.
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: { email?: string }) {
+    const token = await this.authService.createPasswordReset(body.email);
+
+    let resetUrl: string | undefined;
+    if (token) {
+      const origin = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
+      resetUrl = `${origin}/reset-password?token=${token}`;
+      // eslint-disable-next-line no-console
+      console.log(`[recuperación] Enlace para ${body.email}: ${resetUrl}`);
+    }
+
+    const response: { ok: true; resetUrl?: string } = { ok: true };
+    if (resetUrl && process.env.NODE_ENV !== 'production') {
+      response.resetUrl = resetUrl;
+    }
+    return response;
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: { token?: string; password?: string }) {
+    await this.authService.resetPassword(body.token, body.password);
+    return { ok: true };
+  }
+
   // Reemplaza a getCurrentUser(): lo usan el Navbar y la puerta de /admin.
   @Get('me')
   async me(@Req() req: Request) {

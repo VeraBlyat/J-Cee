@@ -162,3 +162,53 @@ CREATE TABLE IF NOT EXISTS comment_votes (
   -- UPDATE, no una fila nueva.
   PRIMARY KEY (comment_id, user_id)
 );
+
+
+-- ============================================================
+-- LIKES DE VIDEOS
+-- Mismo criterio que comment_votes pero sólo "me gusta" (sin dislike): un
+-- like por persona por video. El total es un COUNT y "¿le di like yo?" sale
+-- de la PK, así que no hace falta guardar un contador desnormalizado.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS video_likes (
+  video_id INTEGER NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT NOW(),
+
+  -- La clave compuesta hace imposible dar like dos veces, sin chequearlo antes
+  -- en el código.
+  PRIMARY KEY (video_id, user_id)
+);
+
+-- "Cuántos likes tiene este video" es la consulta de la página del video. La
+-- PK arranca por video_id, así que ya sirve para eso; este índice es para la
+-- dirección contraria, "los videos que me gustaron a mí".
+CREATE INDEX IF NOT EXISTS idx_video_likes_user ON video_likes (user_id);
+
+
+-- ============================================================
+-- RECUPERACIÓN DE CONTRASEÑA
+-- Token de un solo uso con vencimiento. NO se guarda el token en claro: se
+-- guarda su hash SHA-256, igual que no guardamos contraseñas en claro. Quien
+-- ve la base no puede resetear la contraseña de nadie; hace falta el token
+-- original, que sólo viaja al dueño del email.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+  -- SHA-256 en hex = 64 caracteres. El token original nunca toca la base.
+  token_hash VARCHAR(64) NOT NULL,
+
+  expires_at TIMESTAMP NOT NULL,
+  -- Se marca al usarlo: un token sirve una sola vez.
+  used_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Buscar por hash es lo que hace el reseteo en cada intento.
+CREATE INDEX IF NOT EXISTS idx_prt_token_hash ON password_reset_tokens (token_hash);
+-- Para invalidar los tokens viejos de un usuario cuando pide uno nuevo.
+CREATE INDEX IF NOT EXISTS idx_prt_user ON password_reset_tokens (user_id);
